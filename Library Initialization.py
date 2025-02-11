@@ -1,12 +1,5 @@
 from scapy.all import *
-import pcapy
+from scapy.all import IP, TCP
 
-def scapy_test():
-    testPacket = scapy.IP(dst="8.8.8.8")/scap.ICMP()
-    print("The Scapy Library is working properly")
-    print(packet.summary())
-
-def scapy_test():
-    deviceList = pcapy.findalldevs()
-    print("The Pcapy extension is working properly")
-    print(deviceList)
+res, unans = sr( IP(dst="10.0.0.1") #typically we want the GUI to have user input what IP address they want to ping
+                /TCP(flags="S", dport=(1,1024)) )
