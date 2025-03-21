@@ -1,0 +1,18 @@
+Sources used and accessed for development of this project:
+
+
+Official Scapy Documentation:
+https://scapy.readthedocs.io/
+(This is the best place for up-to-date details on Scapy functions, including sniff().)
+
+Scapy GitHub Repository:
+https://github.com/secdev/scapy
+(For latest updates, bug fixes, and contributions.)
+
+Scapy Cheat Sheet (PDF):
+https://www.secdev.org/projects/scapy/doc/scapy_cheat_sheet.pdf
+(Quick reference for packet sniffing, sending, and filtering.)
+
+RFC 791 (IP) and RFC 793 (TCP) Docs
+RFC 791 - Internet Protocol (IP)
+RFC 793 - Transmission Control Protocol (TCP)

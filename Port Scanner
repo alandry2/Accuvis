@@ -1,0 +1,92 @@
+#Objective: Creating a port scanner that will attempt a TCP Connection from local HOSTNAME
+#to every port to check of a port is open or not. For optimization we are using multithreads
+#to asynchronously check more than 1 port per thread.
+
+#ThreadPoolExecutor does asynchronous execution with threads.
+from concurrent.futures import ThreadPoolExecutor
+#Socket library that will be used to attempt to form a TCP connection.
+import socket
+#To measure time it takes
+import time
+#To check pattern of IP address
+import re
+
+#max amount of threads that will execute asynchronously
+#depending on given workers, it changes time it takes of port scanner
+MAX_WORKERS = 20
+
+#given the port range, it will divide the port range evenly into a list to be assigned to a worker
+def assign_thread_ports(port_range):
+    port_chunks = []
+
+    chunk_size = int((int(port_range[1]) - int(port_range[0])) / MAX_WORKERS)
+
+    for i in range(MAX_WORKERS):
+        start = int(port_range[0]) + (chunk_size * i)
+        end = start + chunk_size
+        port_chunks.append([start, end])
+    return port_chunks
+
+def scan(target_ip_address, port_chunk):
+    print(f"Now scanning {target_ip_address} from {port_chunk[0]} to {port_chunk[1]}.")
+
+    #every port will be checked, if SYN/ACK is received, port is open, otherwise it will return nothing
+    for port in range(int(port_chunk[0]),int(port_chunk[1])):
+        try:
+            socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.settimeout(1)
+
+            socket.connect((target_ip_address,port))
+            print(f"[!] Port {port} is open!")
+        except: 
+            None
+
+
+def scan(ip_address, port_chunk):
+    print(f"[~] Scanning {ip_address} from {port_chunk[0]} to {port_chunk[1]}.")
+
+    opened_ports = []
+
+    for port in range(int(port_chunk[0]), int(port_chunk[1])):
+        try: 
+            scan_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            scan_socket.settimeout(1)
+
+            scan_socket.connect((ip_address, port))
+            #add if statement - if successful, append to a list and add it to a global variable, at end of program, you will read that list and based on that opened port determine what its mainly used for.
+            print(f"[!] Port {port} is open")
+            opened_ports.append([port])
+        except:
+            None
+
+        #return list of opened ports
+        return opened_ports
+    
+
+def main():
+
+    #input from user - target IP addr, start port, end port
+    
+    target_ip_addr = input("Please insert the IP address you would like to target.")
+    start_port = input("Please insert starting port of scan.")
+    end_port = input("Please insert ending port of scan.")
+
+    port_range = [start_port,end_port]
+
+    #parameter to divide port range evenly
+    port_chunks = assign_thread_ports(port_range)
+
+    start_time = time.time()
+
+    #executing scan function to a thread to asynchronously run.
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        executor.map(scan, [target_ip_addr] * len(port_chunks),port_chunks)
+        
+
+    end_time = time.time()
+
+    print(f"Scanned {int(port_range[1])-int(port_range[0])} ports in {end_time-start_time} seconds")
+
+if __name__ == '__main__':
+    main()
+
