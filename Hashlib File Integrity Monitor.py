@@ -1,43 +1,61 @@
-from scapy.all import *
-from scapy.all import sniff
-import ipaddress
+import hashlib
+import os
+import json
+from tkinter import Tk, filedialog
 
+def calculate_hash(file_path):
+    #Calculates the SHA-256 hash of a given file
+    hasher = hashlib.sha256()
+    try:
+        with open(file_path, 'rb') as f:
+            while chunk := f.read(4096):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+    except FileNotFoundError:
+        return None
 
-def packet_sniffer(packet): # this will print a summary of each captured packet
-    print("\n"+packet.summary())
-    if packet.haslayer("IP"):
-        print(f" Source IP: {packet['IP'].src}")
-        print(f" Destination IP: {packet['IP'].dst}")
-    if packet.haslayer("TCP") or packet.haslayer("UDP"):
-        protocol = "TCP" if packet.haslayer("TCP") else "UDP"
-        sourcePort = packet.sport
-        destPort = packet.dport
-        print(f" Protocol: {protocol}")
-        print(f" Source Port: {sourcePort}")
-        print(f" Destination Port: {destPort}\n")
+def save_hashes(hashes, filename="file_hashes.json"):
+    """Saves file hashes to a JSON file."""
+    with open(filename, 'w') as f:
+        json.dump(hashes, f, indent=4)
 
-# Define your network filter (Replace with your actual network range)
-netAddress = input("Please enter your target IP address or network (ex: 192.168.1.0/24): ")
+def load_hashes(filename="file_hashes.json"):
+    """Loads file hashes from a JSON file."""
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            return json.load(f)
+    return {}
 
-while True:
-    packetCount = input("How many packets would you like to trace for? ")
-    if packetCount.isdigit() and int(packetCount) > 0:
-        packetCount = int(packetCount)
-        break
-    else:
-        print("This input is incorrect. Please enter a positive number.")
+#using the Tk python library and filedialog function to prompt a dialog box for specific file selection
+def select_files():
+    root = Tk()
+    root.withdraw() #this hides the main window
+    file_path = filedialog.askopenfilenames(title="Select files to monitor")
+    return list(file_path)
 
-# try statement checks for network information validation
-try:
-    if "/" in netAddress: #this will see if CIDR notation is used
-        networkIP = ipaddress.IPv4Network(netAddress, strict=False)
-        ipRange = [str(ip) for ip in networkIP.hosts()] #this will search through usable IP's
-    else:
-        ipRange = netAddress #single IP address not network address
-except ValueError:
-    print("Incorrect value has been given for the IP address and/or subnet. Please try again!")
-
-
-# Sniff packets on the specified network or target ip 
-print("\n The packet capture has begun.. the following "+str(packetCount)+" packets are: ")
-sniff(filter=netAddress, prn=packet_sniffer, iface="Ethernet", store=0, count=packetCount)
+def monitor_files(file_list):
+    """Monitors a list of files for integrity changes."""
+    hashes = load_hashes()
+    for file in file_list:
+        new_hash = calculate_hash(file)
+        if new_hash is None:
+            print(f"[WARNING] {file} not found!")
+            continue
+        
+        if file in hashes:
+            if hashes[file] != new_hash:
+                print(f"[ALERT] {file} has been modified!")
+            else:
+                print(f"[OK] {file} is unchanged.")
+        else:
+            print(f"[NEW] Tracking new file: {file}")
+        
+        hashes[file] = new_hash
+    
+    save_hashes(hashes)
+    
+# Main function test monitor
+if __name__ == "__main__":
+    #files_to_monitor = [r"C:\Users\Admin\Desktop\testhash.txt"]  # you need the r in front of string for structure of the path
+    files_to_monitor = select_files()
+    monitor_files(files_to_monitor)
