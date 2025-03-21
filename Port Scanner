@@ -33,40 +33,17 @@ def scan(target_ip_address, port_chunk):
     #every port will be checked, if SYN/ACK is received, port is open, otherwise it will return nothing
     for port in range(int(port_chunk[0]),int(port_chunk[1])):
         try:
-            socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            socket.settimeout(1)
+            socket_scan = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket_scan.settimeout(1)
 
-            socket.connect((target_ip_address,port))
-            print(f"[!] Port {port} is open!")
+            socket_scan.connect_ex((target_ip_address,port))
+            print(f"[!] Port {port} is open!\n")
         except: 
-            None
-
-
-def scan(ip_address, port_chunk):
-    print(f"[~] Scanning {ip_address} from {port_chunk[0]} to {port_chunk[1]}.")
-
-    opened_ports = []
-
-    for port in range(int(port_chunk[0]), int(port_chunk[1])):
-        try: 
-            scan_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            scan_socket.settimeout(1)
-
-            scan_socket.connect((ip_address, port))
-            #add if statement - if successful, append to a list and add it to a global variable, at end of program, you will read that list and based on that opened port determine what its mainly used for.
-            print(f"[!] Port {port} is open")
-            opened_ports.append([port])
-        except:
-            None
-
-        #return list of opened ports
-        return opened_ports
-    
+            None    
 
 def main():
 
     #input from user - target IP addr, start port, end port
-    
     target_ip_addr = input("Please insert the IP address you would like to target.")
     start_port = input("Please insert starting port of scan.")
     end_port = input("Please insert ending port of scan.")
