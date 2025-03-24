@@ -37,7 +37,7 @@ def scan(target_ip_address, port_chunk):
             socket_scan.settimeout(1)
 
             socket_scan.connect_ex((target_ip_address,port))
-            print(f"[!] Port {port} is open!\n")
+            print(f"[!] Port {port} is open!", sep="")
         except: 
             None    
 
