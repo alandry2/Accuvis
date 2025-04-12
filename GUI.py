@@ -1,4 +1,8 @@
 import sys
+import hashlib
+import os
+import json
+from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
     QPushButton, QPlainTextEdit, QHBoxLayout, QLabel, QGridLayout
@@ -45,8 +49,13 @@ class IDS_GUI(QMainWindow):
         self.stop_button.setStyleSheet("background-color: #f44336; color: white; padding: 10px;")
         self.stop_button.clicked.connect(self.stop_scan)
 
+        self.monitor_button = QPushButton("Monitor Files")
+        self.monitor_button.setStyleSheet("background-color: #2196F3; color: white; padding: 10px;")
+        self.monitor_button.clicked.connect(self.monitor_files)
+
         button_layout.addWidget(self.start_button)
         button_layout.addWidget(self.stop_button)
+        button_layout.addWidget(self.monitor_button)
 
         # Button layout positioned bottom right
         button_container = QWidget()
@@ -83,6 +92,54 @@ class IDS_GUI(QMainWindow):
             self.terminal_output.appendPlainText(output)
         if error:
             self.terminal_output.appendPlainText(error)
+
+    #file integrity monitoring function
+    def calculate_hash(self, file_path):
+        hasher = hashlib.sha256()
+        try:
+            with open(file_path, 'rb') as f:
+                while chunk := f.read(4096):
+                    hasher.update(chunk)
+            return hasher.hexdigest()
+        except FileNotFoundError:
+            return None
+
+    def save_hashes(self, hashes, filename="file_hashes.json"):
+        with open(filename, 'w') as f:
+            json.dump(hashes, f, indent=4)
+
+    def load_hashes(self, filename="file_hashes.json"):
+        if os.path.exists(filename):
+            with open(filename, 'r') as f:
+                return json.load(f)
+        return {}
+
+    def monitor_files(self):
+        file_list = filedialog.askopenfilenames(title="Select files to monitor")
+        if not file_list:
+            return
+
+        hashes = self.load_hashes()
+        for file in file_list:
+            new_hash = self.calculate_hash(file)
+            if new_hash is None:
+                self.terminal_output.appendPlainText(f"[WARNING] {file} not found!")
+                continue
+            
+            if file in hashes:
+                if hashes[file] != new_hash:
+                    self.terminal_output.appendPlainText(f"[ALERT] {file} has been modified!")
+                else:
+                    self.terminal_output.appendPlainText(f"[OK] {file} is unchanged.")
+            else:
+                self.terminal_output.appendPlainText(f"[NEW] Tracking new file: {file}")
+            
+            hashes[file] = new_hash
+        
+        self.save_hashes(hashes)
+        self.terminal_output.appendPlainText("[INFO] Hash monitoring complete.")
+        
+        
 
 
 if __name__ == "__main__":
