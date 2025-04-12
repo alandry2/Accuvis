@@ -12,6 +12,7 @@ from PyQt6.QtGui import QPixmap
 from scapy.all import sniff
 import threading
 import ipaddress
+from pathlib import Path
 
 class IDS_GUI(QMainWindow):
     def __init__(self):
@@ -36,11 +37,15 @@ class IDS_GUI(QMainWindow):
         layout.addWidget(self.terminal_output, 0, 0, 2, 2)  # Terminal spans 2 rows, 2 cols
 
         # Bird logo (top right)
-        pixmap = QPixmap("bird_logo.png")
+        currentDirectory = Path(__file__).parent
+        logoPath = currentDirectory / "bird_logo.png"
+        pixmap = QPixmap(str(logoPath))
         self.logo = QLabel(self)
         self.logo.setPixmap(pixmap)
         self.logo.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
         layout.addWidget(self.logo, 0, 2)
+
+        
 
         # Buttons (bottom right)
         button_layout = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
