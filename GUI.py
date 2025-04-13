@@ -5,7 +5,7 @@ import json
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
-    QPushButton, QPlainTextEdit, QHBoxLayout, QLabel,
+    QPushButton, QTextEdit, QHBoxLayout, QLabel,
       QGridLayout, QInputDialog, QStackedLayout
 )
 from PyQt6.QtCore import QProcess, Qt
@@ -24,9 +24,14 @@ class IDS_GUI(QMainWindow):
 
         # Main layout
         layout = QGridLayout()
-
+        self.setStyleSheet("""
+            QMainWindow {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                            stop:0 #1e3c72, stop:1 #2a5298);
+            }
+        """)
         # Terminal-like display area (top left)
-        self.terminal_output = QPlainTextEdit(self)
+        self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
         self.terminal_output.setPlaceholderText("Terminal output will appear here...")
         self.terminal_output.setStyleSheet("""
@@ -231,7 +236,7 @@ class IDS_GUI(QMainWindow):
         """Stop the scan process"""
         if self.process.state() == QProcess.ProcessState.Running:
             self.process.kill()
-            self.terminal_output.appendPlainText("\nScan stopped.")
+            self.terminal_output.append("\nScan stopped.")
 
     def display_output(self):
         """Display terminal output in the GUI"""
@@ -239,9 +244,9 @@ class IDS_GUI(QMainWindow):
         error = self.process.readAllStandardError().data().decode()
 
         if output:
-            self.terminal_output.appendPlainText(output)
+            self.terminal_output.append(output)
         if error:
-            self.terminal_output.appendPlainText(error)
+            self.terminal_output.append(error)
 
     def run_sniffer(self):
         ip, ok = QInputDialog.getText(self, "Target IP/Network", "Enter IP or network (e.g. 192.168.1.0/24):")
@@ -253,26 +258,40 @@ class IDS_GUI(QMainWindow):
         if not ok:
             return
 
-        self.terminal_output.appendPlainText(f"[INFO] Starting sniffer on: {ip or 'default'} for {count} packets...")
+        self.terminal_output.append(f"[INFO] Starting sniffer on: {ip or 'default'} for {count} packets...")
 
         def packet_sniffer(packet):
-            summary = "\n" + packet.summary()
+            summary = f"<br><span style='color:white;'>{packet.summary()}</span>"
+
             if packet.haslayer("IP"):
-                summary += f"\n Source IP: {packet['IP'].src}"
-                summary += f"\n Destination IP: {packet['IP'].dst}"
+                summary += f"<br> Source IP: {packet['IP'].src}"
+                summary += f"<br> Destination IP: {packet['IP'].dst}"
+
             if packet.haslayer("TCP") or packet.haslayer("UDP"):
                 protocol = "TCP" if packet.haslayer("TCP") else "UDP"
-                summary += f"\n Protocol: {protocol}"
-                summary += f"\n Source Port: {packet.sport}"
-                summary += f"\n Destination Port: {packet.dport}\n"
-            self.terminal_output.appendPlainText(summary)
+                color = "cyan"
+
+                # Define unsafe ports
+                insecurePorts = [23, 21, 445, 135, 139, 3389] #this includes unsafe protocols such as 23 Telnet 21 FTP 445 SMB and more!
+
+                def format_port(port):
+                    if port in insecurePorts:
+                        return f"<span style='color:red;font-weight:bold;'>{port}</span>"
+                    return f"<span style='color:blue;'>{port}</span>"
+
+                summary += f"<br> Protocol: <span style='color:{color}; font-weight:bold;'>{protocol}</span>"
+                summary += f"<br> Source Port: {format_port(packet.sport)}"
+                summary += f"<br> Destination Port: {format_port(packet.dport)}<br>"
+
+            self.terminal_output.append(summary)
+
 
         def sniff_thread():
             try:
                 sniff(filter=f"ip and net {ip}" if ip else "ip", prn=packet_sniffer, count=count, iface="Ethernet", store=False)
-                self.terminal_output.appendPlainText("[INFO] Packet sniffing completed.")
+                self.terminal_output.append("[INFO] Packet sniffing completed.")
             except Exception as e:
-                self.terminal_output.appendPlainText(f"[ERROR] {str(e)}")
+                self.terminal_output.append(f"[ERROR] {str(e)}")
 
         thread = threading.Thread(target=sniff_thread, daemon=True)
         thread.start()
@@ -310,21 +329,21 @@ class IDS_GUI(QMainWindow):
         for file in file_list:
             new_hash = self.calculate_hash(file)
             if new_hash is None:
-                self.terminal_output.appendPlainText(f"[WARNING] {file} not found!")
+                self.terminal_output.append(f"[WARNING] {file} not found!")
                 continue
             
             if file in hashes:
                 if hashes[file] != new_hash:
-                    self.terminal_output.appendPlainText(f"[ALERT] {file} has been modified!")
+                    self.terminal_output.append(f"[ALERT] {file} has been modified!")
                 else:
-                    self.terminal_output.appendPlainText(f"[OK] {file} is unchanged.")
+                    self.terminal_output.append(f"[OK] {file} is unchanged.")
             else:
-                self.terminal_output.appendPlainText(f"[NEW] Tracking new file: {file}")
+                self.terminal_output.append(f"[NEW] Tracking new file: {file}")
             
             hashes[file] = new_hash
         
         self.save_hashes(hashes)
-        self.terminal_output.appendPlainText("[INFO] Hash monitoring complete.")
+        self.terminal_output.append("[INFO] Hash monitoring complete.")
 
     # ----------- END OF file hash functions -----------------      
         
