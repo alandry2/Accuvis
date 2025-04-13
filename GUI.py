@@ -5,7 +5,8 @@ import json
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
-    QPushButton, QPlainTextEdit, QHBoxLayout, QLabel, QGridLayout, QInputDialog
+    QPushButton, QPlainTextEdit, QHBoxLayout, QLabel,
+      QGridLayout, QInputDialog, QStackedLayout
 )
 from PyQt6.QtCore import QProcess, Qt
 from PyQt6.QtGui import QPixmap
@@ -43,12 +44,17 @@ class IDS_GUI(QMainWindow):
         self.logo = QLabel(self)
         self.logo.setPixmap(pixmap)
         self.logo.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(self.logo, 0, 2)
+        layout.addWidget(self.logo, 0, 2) #Logo spans 1 row, 1 col
 
-        
 
-        # Buttons (bottom right)
-        button_layout = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+
+
+
+        # Dynamic input Buttons (bottom right)
+        self.stackLayout = QStackedLayout()
+
+        #Button Layout 1 - Packet Scanner
+        button_layout1 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
         self.start_button = QPushButton("Start Scan")
         self.start_button.setStyleSheet("background-color: #4CAF50; color: white; padding: 10px;")
@@ -66,15 +72,138 @@ class IDS_GUI(QMainWindow):
         self.sniff_button.setStyleSheet("background-color: orange; color: white; padding: 10px;")
         self.sniff_button.clicked.connect(self.run_sniffer)
 
-        button_layout.addWidget(self.start_button)
-        button_layout.addWidget(self.stop_button)
-        button_layout.addWidget(self.monitor_button)
-        button_layout.addWidget(self.sniff_button)
+        button_layout1.addWidget(self.start_button)
+        button_layout1.addWidget(self.stop_button)
+        button_layout1.addWidget(self.monitor_button)
+        button_layout1.addWidget(self.sniff_button)
 
         # Button layout positioned bottom right
-        button_container = QWidget()
-        button_container.setLayout(button_layout)
-        layout.addWidget(button_container, 1, 2, 2, 1) #this value was previously 1, 2 for horizontal buttons
+        button_container1 = QWidget()
+        button_container1.setLayout(button_layout1)
+        self.stackLayout.addWidget(button_container1) 
+
+        #Button Layout 2 - Port Scanner
+        button_layout2 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        
+        self.start_button2 = QPushButton("PORT SCANNER BUTTON 1")
+        self.start_button2.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
+        self.start_button2.clicked.connect(self.start_scan)
+
+        self.stop_button2 = QPushButton("PORT SCANNER BUTTON 2")
+        self.stop_button2.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
+        self.stop_button2.clicked.connect(self.stop_scan)
+
+        self.monitor_button2 = QPushButton("PORT SCANNER BUTTON 3")
+        self.monitor_button2.setStyleSheet("background-color: blue; color: white; padding: 10px;")
+        self.monitor_button2.clicked.connect(self.monitor_files)
+
+        self.sniff_button2 = QPushButton("PORT SCANNER BUTTON 4")
+        self.sniff_button2.setStyleSheet("background-color: orange; color: white; padding: 10px;")
+        self.sniff_button2.clicked.connect(self.run_sniffer)
+
+        button_layout2.addWidget(self.start_button2)
+        button_layout2.addWidget(self.stop_button2)
+        button_layout2.addWidget(self.monitor_button2)
+        button_layout2.addWidget(self.sniff_button2)
+
+        # Button layout positioned bottom right
+        button_container2 = QWidget()
+        button_container2.setLayout(button_layout2)
+        self.stackLayout.addWidget(button_container2)
+
+        #Button Layout 3 - Port Scanner
+        button_layout3 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        
+        self.start_button3 = QPushButton("FILE INTEGRITY BUTTON 1")
+        self.start_button3.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
+        self.start_button3.clicked.connect(self.start_scan)
+
+        self.stop_button3 = QPushButton("FILE INTEGRITY BUTTON 2")
+        self.stop_button3.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
+        self.stop_button3.clicked.connect(self.stop_scan)
+
+        self.monitor_button3 = QPushButton("FILE INTEGRITY BUTTON 3")
+        self.monitor_button3.setStyleSheet("background-color: blue; color: white; padding: 10px;")
+        self.monitor_button3.clicked.connect(self.monitor_files)
+
+        self.sniff_button3 = QPushButton("FILE INTEGRITY BUTTON 4")
+        self.sniff_button3.setStyleSheet("background-color: orange; color: white; padding: 10px;")
+        self.sniff_button3.clicked.connect(self.run_sniffer)
+
+        button_layout3.addWidget(self.start_button3)
+        button_layout3.addWidget(self.stop_button3)
+        button_layout3.addWidget(self.monitor_button3)
+        button_layout3.addWidget(self.sniff_button3)
+
+        # Button layout positioned bottom right
+        button_container3 = QWidget()
+        button_container3.setLayout(button_layout3)
+        self.stackLayout.addWidget(button_container3)
+
+        #Button Layout 4 - Port Scanner
+        button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        
+        self.start_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 1")
+        self.start_button4.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
+        self.start_button4.clicked.connect(self.start_scan)
+
+        self.stop_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 2")
+        self.stop_button4.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
+        self.stop_button4.clicked.connect(self.stop_scan)
+
+        self.monitor_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 3")
+        self.monitor_button4.setStyleSheet("background-color: blue; color: white; padding: 10px;")
+        self.monitor_button4.clicked.connect(self.monitor_files)
+
+        self.sniff_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 4")
+        self.sniff_button4.setStyleSheet("background-color: orange; color: white; padding: 10px;")
+        self.sniff_button4.clicked.connect(self.run_sniffer)
+
+        button_layout4.addWidget(self.start_button4)
+        button_layout4.addWidget(self.stop_button4)
+        button_layout4.addWidget(self.monitor_button4)
+        button_layout4.addWidget(self.sniff_button4)
+
+        # Button layout positioned bottom right
+        button_container4 = QWidget()
+        button_container4.setLayout(button_layout4)
+        self.stackLayout.addWidget(button_container4)
+
+        #adding stackedwiget into layout of page
+        self.stackedContainer = QWidget()
+        self.stackedContainer.setLayout(self.stackLayout)
+        layout.addWidget(self.stackedContainer, 1, 2,) #this value was previously 1, 2 for horizontal buttons
+
+
+
+
+        # Function Buttons (bottom)
+        button_layout2 = QHBoxLayout()
+
+        self.function_PacketScanner = QPushButton("Packet Scanner")
+        self.function_PacketScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(0))#lambda is a helper method; makes function into 1 line
+
+        self.function_PortScanner = QPushButton("Port Scanner")
+        self.function_PortScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(1))
+
+        self.function_FileIntegritSys = QPushButton("File Integrity System")
+        self.function_FileIntegritSys.clicked.connect(lambda: self.stackLayout.setCurrentIndex(2))
+
+        self.function_AccuvisActive = QPushButton("Accuvis Active")
+        self.function_AccuvisActive.clicked.connect(lambda: self.stackLayout.setCurrentIndex(3))
+
+        button_layout2.addWidget(self.function_PacketScanner)
+        button_layout2.addWidget(self.function_PortScanner)
+        button_layout2.addWidget(self.function_FileIntegritSys)
+        button_layout2.addWidget(self.function_AccuvisActive)
+
+        button_container2 = QWidget()
+        button_container2.setLayout(button_layout2)
+        layout.addWidget(button_container2, 3, 0, 1, 3)        
+        
+        #stretches terminal to fill gaps
+        layout.setColumnStretch(0, 3)
+
 
         # Set main layout
         container = QWidget()
@@ -88,7 +217,11 @@ class IDS_GUI(QMainWindow):
 
 
 
+
     #------------ Packet Scanner function ------------------------
+
+    #Dyanmic Button Layout
+
     def start_scan(self):
         """Start a Scapy scan or network command"""
         command = "ping -c 4 8.8.8.8"  
