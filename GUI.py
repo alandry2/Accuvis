@@ -18,7 +18,7 @@ class IDS_GUI(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Network IDS GUI")
+        self.setWindowTitle("Accuvis - Network IDS GUI")
         self.setGeometry(200, 200, 1000, 700)
 
         # Main layout
