@@ -23,7 +23,12 @@ class IDS_GUI(QMainWindow):
 
         # Main layout
         layout = QGridLayout()
-
+        self.setStyleSheet("""
+            QMainWindow {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                            stop:0 #1e3c72, stop:1 #2a5298);
+            }
+        """)
         # Terminal-like display area (top left)
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
