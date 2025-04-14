@@ -33,7 +33,7 @@ class IDS_GUI(QMainWindow):
         # Terminal-like display area (top left)
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
-        self.terminal_output.setPlaceholderText("Terminal output will appear here...")
+        self.terminal_output.setPlaceholderText("Terminal: ")
         self.terminal_output.setStyleSheet("""
             background-color: black;
             color: lime;
