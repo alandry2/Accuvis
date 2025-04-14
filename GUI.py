@@ -1,3 +1,12 @@
+#ThreadPoolExecutor does asynchronous execution with threads.
+from concurrent.futures import ThreadPoolExecutor
+#Socket library that will be used to attempt to form a TCP connection.
+import socket
+#To measure time it takes
+import time
+#To check pattern of IP address
+import re
+
 import sys
 import hashlib
 import os
@@ -6,7 +15,7 @@ from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
     QPushButton, QTextEdit, QHBoxLayout, QLabel,
-      QGridLayout, QInputDialog, QStackedLayout
+    QGridLayout, QInputDialog, QStackedLayout, QMessageBox
 )
 from PyQt6.QtCore import QProcess, Qt
 from PyQt6.QtGui import QPixmap
@@ -20,7 +29,7 @@ class IDS_GUI(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Network IDS GUI")
-        self.setGeometry(200, 200, 1000, 700)
+        self.setGeometry(200, 200, 8000, 600)
 
         # Main layout
         layout = QGridLayout()
@@ -61,25 +70,10 @@ class IDS_GUI(QMainWindow):
         #Button Layout 1 - Packet Scanner
         button_layout1 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.start_button = QPushButton("Start Scan")
-        self.start_button.setStyleSheet("background-color: #4CAF50; color: white; padding: 10px;")
-        self.start_button.clicked.connect(self.start_scan)
-
-        self.stop_button = QPushButton("Stop Scan")
-        self.stop_button.setStyleSheet("background-color: #f44336; color: white; padding: 10px;")
-        self.stop_button.clicked.connect(self.stop_scan)
-
-        self.monitor_button = QPushButton("Monitor Files")
-        self.monitor_button.setStyleSheet("background-color: #2196F3; color: white; padding: 10px;")
-        self.monitor_button.clicked.connect(self.monitor_files)
-
         self.sniff_button = QPushButton("Start Packet Sniffer")
         self.sniff_button.setStyleSheet("background-color: orange; color: white; padding: 10px;")
         self.sniff_button.clicked.connect(self.run_sniffer)
 
-        button_layout1.addWidget(self.start_button)
-        button_layout1.addWidget(self.stop_button)
-        button_layout1.addWidget(self.monitor_button)
         button_layout1.addWidget(self.sniff_button)
 
         # Button layout positioned bottom right
@@ -90,77 +84,62 @@ class IDS_GUI(QMainWindow):
         #Button Layout 2 - Port Scanner
         button_layout2 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.start_button2 = QPushButton("PORT SCANNER BUTTON 1")
-        self.start_button2.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
-        self.start_button2.clicked.connect(self.start_scan)
+        self.targetIpAddress = QTextEdit()
+        self.targetIpAddress.setPlaceholderText("Input Target IP Address")
+        self.targetIpAddress.setStyleSheet("background-color: black; color: white; padding: 10px;")
 
-        self.stop_button2 = QPushButton("PORT SCANNER BUTTON 2")
-        self.stop_button2.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
-        self.stop_button2.clicked.connect(self.stop_scan)
+        self.startPortNum = QTextEdit()
+        self.startPortNum.setPlaceholderText(" Start Port Number")
+        self.startPortNum.setStyleSheet("background-color: black; color: white; padding: 10px;")
 
-        self.monitor_button2 = QPushButton("PORT SCANNER BUTTON 3")
-        self.monitor_button2.setStyleSheet("background-color: blue; color: white; padding: 10px;")
-        self.monitor_button2.clicked.connect(self.monitor_files)
+        self.endPortNum = QTextEdit()
+        self.endPortNum.setPlaceholderText("Input End Port Number")
+        self.endPortNum.setStyleSheet("background-color: black; color: white; padding: 10px;")
 
-        self.sniff_button2 = QPushButton("PORT SCANNER BUTTON 4")
-        self.sniff_button2.setStyleSheet("background-color: orange; color: white; padding: 10px;")
-        self.sniff_button2.clicked.connect(self.run_sniffer)
+        self.start_port_scan = QPushButton("Start Port Scan")
+        self.start_port_scan.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.start_port_scan.clicked.connect(self.prePortScan)
 
-        button_layout2.addWidget(self.start_button2)
-        button_layout2.addWidget(self.stop_button2)
-        button_layout2.addWidget(self.monitor_button2)
-        button_layout2.addWidget(self.sniff_button2)
+        button_layout2.addWidget(self.targetIpAddress)
+        button_layout2.addWidget(self.startPortNum)
+        button_layout2.addWidget(self.endPortNum)
+        button_layout2.addWidget(self.start_port_scan)
 
         # Button layout positioned bottom right
         button_container2 = QWidget()
         button_container2.setLayout(button_layout2)
         self.stackLayout.addWidget(button_container2)
 
-        #Button Layout 3 - Port Scanner
+        #Button Layout 3 - File Integrity Monitor
         button_layout3 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.start_button3 = QPushButton("FILE INTEGRITY BUTTON 1")
-        self.start_button3.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
-        self.start_button3.clicked.connect(self.start_scan)
-
-        self.stop_button3 = QPushButton("FILE INTEGRITY BUTTON 2")
-        self.stop_button3.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
-        self.stop_button3.clicked.connect(self.stop_scan)
-
         self.monitor_button3 = QPushButton("FILE INTEGRITY BUTTON 3")
         self.monitor_button3.setStyleSheet("background-color: blue; color: white; padding: 10px;")
         self.monitor_button3.clicked.connect(self.monitor_files)
 
-        self.sniff_button3 = QPushButton("FILE INTEGRITY BUTTON 4")
-        self.sniff_button3.setStyleSheet("background-color: orange; color: white; padding: 10px;")
-        self.sniff_button3.clicked.connect(self.run_sniffer)
-
-        button_layout3.addWidget(self.start_button3)
-        button_layout3.addWidget(self.stop_button3)
         button_layout3.addWidget(self.monitor_button3)
-        button_layout3.addWidget(self.sniff_button3)
 
         # Button layout positioned bottom right
         button_container3 = QWidget()
         button_container3.setLayout(button_layout3)
         self.stackLayout.addWidget(button_container3)
 
-        #Button Layout 4 - Port Scanner
+        #Button Layout 4 - Accuvis LIVE
         button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.start_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 1")
+        self.start_button4 = QPushButton("ACCUVIS LIVE BUTTON 1")
         self.start_button4.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
         self.start_button4.clicked.connect(self.start_scan)
 
-        self.stop_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 2")
+        self.stop_button4 = QPushButton("ACCUVIS LIVE BUTTON 2")
         self.stop_button4.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
         self.stop_button4.clicked.connect(self.stop_scan)
 
-        self.monitor_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 3")
+        self.monitor_button4 = QPushButton("ACCUVIS LIVE BUTTON 3")
         self.monitor_button4.setStyleSheet("background-color: blue; color: white; padding: 10px;")
         self.monitor_button4.clicked.connect(self.monitor_files)
 
-        self.sniff_button4 = QPushButton("ACCUVIS ACTIVE BUTTON 4")
+        self.sniff_button4 = QPushButton("ACCUVIS LIVE BUTTON 4")
         self.sniff_button4.setStyleSheet("background-color: orange; color: white; padding: 10px;")
         self.sniff_button4.clicked.connect(self.run_sniffer)
 
@@ -191,15 +170,15 @@ class IDS_GUI(QMainWindow):
         self.function_PortScanner = QPushButton("Port Scanner")
         self.function_PortScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(1))
 
-        self.function_FileIntegritSys = QPushButton("File Integrity System")
-        self.function_FileIntegritSys.clicked.connect(lambda: self.stackLayout.setCurrentIndex(2))
+        self.function_FileIntegritMon = QPushButton("File Integrity Monitor")
+        self.function_FileIntegritMon.clicked.connect(lambda: self.stackLayout.setCurrentIndex(2))
 
-        self.function_AccuvisActive = QPushButton("Accuvis Active")
+        self.function_AccuvisActive = QPushButton("Accuvis LIVE")
         self.function_AccuvisActive.clicked.connect(lambda: self.stackLayout.setCurrentIndex(3))
 
         button_layout2.addWidget(self.function_PacketScanner)
         button_layout2.addWidget(self.function_PortScanner)
-        button_layout2.addWidget(self.function_FileIntegritSys)
+        button_layout2.addWidget(self.function_FileIntegritMon)
         button_layout2.addWidget(self.function_AccuvisActive)
 
         button_container2 = QWidget()
@@ -348,6 +327,98 @@ class IDS_GUI(QMainWindow):
     # ----------- END OF file hash functions -----------------      
         
 
+    # ----------- START OF port scanner functions -----------------
+
+    def prePortScan(self):
+        #preconditions before going to Port Scanner
+        target_ip_addr = self.targetIpAddress.toPlainText().strip()
+        start_port_num = self.startPortNum.toPlainText().strip()
+        end_port_num = self.endPortNum.toPlainText().strip()
+
+        target_ip_addr = target_ip_addr.strip()
+        noInputDialog = QMessageBox()
+        noInputDialog.setWindowTitle("Error Has Occurred")
+        noInputDialog.setText("Please make sure you have input inside the boxes")
+
+        portNumsError = QMessageBox()
+        portNumsError.setWindowTitle("Error Has Occurred")
+        portNumsError.setText("Please make sure you have input integers for start and end port boxes")
+
+        if not (target_ip_addr and start_port_num and end_port_num):
+            noInputDialog.exec()
+            return
+
+        try:
+            #portScan function need int values as args
+            start_port_num = int(start_port_num)
+            end_port_num = int(end_port_num)
+        
+        except ValueError:
+            portNumsError.exec()
+            return
+        
+        self.portScan(target_ip_addr, start_port_num,end_port_num)
+            
+
+    #given the port range, it will divide the port range evenly into a list to be assigned to a worker
+    def assign_thread_ports(self, port_range):
+
+        #Defines how many threads are used
+        MAX_WORKERS = 20
+        port_chunks = []
+
+        #Divides ports even for every worker (in this case 20)
+        chunk_size = int((int(port_range[1]) - int(port_range[0])) / MAX_WORKERS)
+
+        for i in range(MAX_WORKERS):
+            start = int(port_range[0]) + (chunk_size * i)
+            end = start + chunk_size
+            port_chunks.append([start, end])
+        return port_chunks
+
+    def scan(self, target_ip_address, port_chunk):
+        self.terminal_output.append(f"Now scanning {target_ip_address} from {port_chunk[0]} to {port_chunk[1]}.")
+
+        #every port will be checked, if SYN/ACK is received, port is open, otherwise (no response or error) it will return nothing
+        for port in range(int(port_chunk[0]),int(port_chunk[1])):
+            try:
+                socket_scan = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                socket_scan.settimeout(1)
+
+                socket_scan.connect_ex((target_ip_address,port))
+                self.terminal_output.append(f"[!] Port {port} is open!", sep="")
+            except: 
+                None
+
+        #input from user - target IP addr, start port, end port
+    def portScan(self, target_ip_addr, start_port, end_port):
+
+        MAX_WORKERS = 20
+
+        invalidPortsDialog = QMessageBox()
+        invalidPortsDialog.setWindowTitle("Error Has Occurred")
+        invalidPortsDialog.setText("Start Port Must Begin Earlier Than End Port. Ex. 1-10")
+    
+        if (start_port < end_port):
+
+            port_range = [start_port,end_port]
+
+            #parameter to divide port range evenly
+            port_chunks = self.assign_thread_ports(port_range)
+
+            start_time = time.time()
+
+            #executing scan function to a thread to asynchronously run.
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                executor.map(self.scan, [target_ip_addr] * len(port_chunks),port_chunks)
+                
+            end_time = time.time()
+    
+            self.terminal_output.append(f"Scanned {int(port_range[1])-int(port_range[0])} ports in {end_time-start_time} seconds")
+
+        else:
+            invalidPortsDialog.exec()
+    # ----------- END OF port scanner functions -----------------
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
