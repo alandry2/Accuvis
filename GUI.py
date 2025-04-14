@@ -39,7 +39,7 @@ class IDS_GUI(QMainWindow):
                                             stop:0 #1e3c72, stop:1 #2a5298);
             }
         """)
-        # Terminal-like display area (top left)
+        # Terminal-like display area (top left) the stylesheet is going to customize how it looks below
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
         self.terminal_output.setPlaceholderText("Terminal: ")
@@ -64,7 +64,7 @@ class IDS_GUI(QMainWindow):
 
 
 
-        # Dynamic input Buttons (bottom right)
+        # Dynamic input Buttons (bottom right buttons are going here)
         self.stackLayout = QStackedLayout()
 
         #Button Layout 1 - Packet Scanner
@@ -105,7 +105,7 @@ class IDS_GUI(QMainWindow):
         button_layout2.addWidget(self.endPortNum)
         button_layout2.addWidget(self.start_port_scan)
 
-        # Button layout positioned bottom right
+        # Button layout for second set of buttons with container
         button_container2 = QWidget()
         button_container2.setLayout(button_layout2)
         self.stackLayout.addWidget(button_container2)
@@ -124,7 +124,7 @@ class IDS_GUI(QMainWindow):
         button_container3.setLayout(button_layout3)
         self.stackLayout.addWidget(button_container3)
 
-        #Button Layout 4 - Accuvis LIVE
+        #Button Layout 4 - Accuvis LIVE this will eventually run as the main IDS function
         button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
         self.start_button4 = QPushButton("ACCUVIS LIVE BUTTON 1")
@@ -156,7 +156,7 @@ class IDS_GUI(QMainWindow):
         #adding stackedwiget into layout of page
         self.stackedContainer = QWidget()
         self.stackedContainer.setLayout(self.stackLayout)
-        layout.addWidget(self.stackedContainer, 1, 2,) #this value was previously 1, 2 for horizontal buttons
+        layout.addWidget(self.stackedContainer, 1, 2,) #this value was previously 1, 2 for horizontal buttons (side note)
 
 
 
@@ -250,9 +250,10 @@ class IDS_GUI(QMainWindow):
                 protocol = "TCP" if packet.haslayer("TCP") else "UDP"
                 color = "cyan"
 
-                # Define unsafe ports
+                # this array contains the unsafe ports that will determine the color of the Protocol in the packet summary
                 insecurePorts = [23, 21, 445, 135, 139, 3389] #this includes unsafe protocols such as 23 Telnet 21 FTP 445 SMB and more!
 
+                #the html style of design here is only used to make the output look nice compared to one solid color
                 def format_port(port):
                     if port in insecurePorts:
                         return f"<span style='color:red;font-weight:bold;'>{port}</span>"
@@ -279,6 +280,7 @@ class IDS_GUI(QMainWindow):
 
 
     #------------file integrity monitoring function ------------------------
+    #JSON file is created to compare and store the hashes - makes it easier to monitor
     def calculate_hash(self, file_path):
         hasher = hashlib.sha256()
         try:
@@ -313,7 +315,7 @@ class IDS_GUI(QMainWindow):
             
             if file in hashes:
                 if hashes[file] != new_hash:
-                    self.terminal_output.append(f"[ALERT] {file} has been modified!")
+                    self.terminal_output.append(f"[ALERT!!] {file} has been modified!")
                 else:
                     self.terminal_output.append(f"[OK] {file} is unchanged.")
             else:
@@ -322,7 +324,7 @@ class IDS_GUI(QMainWindow):
             hashes[file] = new_hash
         
         self.save_hashes(hashes)
-        self.terminal_output.append("[INFO] Hash monitoring complete.")
+        self.terminal_output.append("[INFO] File Hash monitoring complete.")
 
     # ----------- END OF file hash functions -----------------      
         
@@ -349,7 +351,7 @@ class IDS_GUI(QMainWindow):
             return
 
         try:
-            #portScan function need int values as args
+            #integeter data type is required here for the argument
             start_port_num = int(start_port_num)
             end_port_num = int(end_port_num)
         
@@ -363,7 +365,7 @@ class IDS_GUI(QMainWindow):
     #given the port range, it will divide the port range evenly into a list to be assigned to a worker
     def assign_thread_ports(self, port_range):
 
-        #Defines how many threads are used
+        #Defining amount of threads being used here
         MAX_WORKERS = 20
         port_chunks = []
 
