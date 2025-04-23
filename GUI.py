@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QProcess, Qt
 from PyQt6.QtGui import QPixmap
-from scapy.all import sniff
+from scapy.all import sniff, get_if_list
 import threading
 import ipaddress
 from pathlib import Path
@@ -57,7 +57,7 @@ class IDS_GUI(QMainWindow):
         pixmap = QPixmap(str(logoPath))
         self.logo = QLabel(self)
         self.logo.setPixmap(pixmap)
-        self.logo.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        self.logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.logo, 0, 2) #Logo spans 1 row, 1 col
 
 
