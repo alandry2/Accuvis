@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QGridLayout, QInputDialog, QStackedLayout, QMessageBox 
 )
 from PyQt6.QtCore import QProcess, Qt
-from PyQt6.QtGui import QPixmap, QTextCursor
+from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
 from scapy.all import sniff, get_if_list
 import threading
 import ipaddress
@@ -42,7 +42,7 @@ class IDS_GUI(QMainWindow):
         # Terminal-like display area (top left) the stylesheet is going to customize how it looks below
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
-        self.terminal_output.setPlaceholderText("Terminal: ")
+        self.terminal_output.setPlaceholderText("Welcome to the Accuvis, your very own host-based IDS!! ")
         self.terminal_output.setStyleSheet("""
             background-color: black;
             color: lime;
@@ -54,6 +54,8 @@ class IDS_GUI(QMainWindow):
         # Bird logo (top right)
         currentDirectory = Path(__file__).parent
         logoPath = currentDirectory / "bird_logo.png"
+        iconPath = currentDirectory / "IDS_icon.png"
+        self.setWindowIcon(QIcon(str(iconPath)))
         pixmap = QPixmap(str(logoPath))
         self.logo = QLabel(self)
         self.logo.setPixmap(pixmap)
@@ -113,7 +115,7 @@ class IDS_GUI(QMainWindow):
         #Button Layout 3 - File Integrity Monitor
         button_layout3 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.monitor_button3 = QPushButton("FILE INTEGRITY BUTTON 3")
+        self.monitor_button3 = QPushButton("File Integrity Scan")
         self.monitor_button3.setStyleSheet("background-color: blue; color: white; padding: 10px;")
         self.monitor_button3.clicked.connect(self.monitor_files)
 
@@ -265,7 +267,7 @@ class IDS_GUI(QMainWindow):
 
             self.terminal_output.append(summary)
 
-
+    #change value of "Ethernet" in the sniff command to "Wi-Fi" and if ncap is installed on host computer it will run off of Wi-Fi - this needs to be addressed in terminal
         def sniff_thread():
             try:
                 sniff(filter=f"ip and net {ip}" if ip else "ip", prn=packet_sniffer, count=count, iface="Ethernet", store=False)
