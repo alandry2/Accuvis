@@ -18,8 +18,8 @@ from PyQt6.QtWidgets import (
     QGridLayout, QInputDialog, QStackedLayout, QMessageBox 
 )
 from PyQt6.QtCore import QProcess, Qt
-from PyQt6.QtGui import QPixmap
-from scapy.all import sniff
+from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
+from scapy.all import sniff, get_if_list
 import threading
 import ipaddress
 from pathlib import Path
@@ -42,7 +42,7 @@ class IDS_GUI(QMainWindow):
         # Terminal-like display area (top left) the stylesheet is going to customize how it looks below
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
-        self.terminal_output.setPlaceholderText("Terminal: ")
+        self.terminal_output.setPlaceholderText("Welcome to the Accuvis, your very own host-based IDS!! ")
         self.terminal_output.setStyleSheet("""
             background-color: black;
             color: lime;
@@ -54,10 +54,12 @@ class IDS_GUI(QMainWindow):
         # Bird logo (top right)
         currentDirectory = Path(__file__).parent
         logoPath = currentDirectory / "bird_logo.png"
+        iconPath = currentDirectory / "IDS_icon.png"
+        self.setWindowIcon(QIcon(str(iconPath)))
         pixmap = QPixmap(str(logoPath))
         self.logo = QLabel(self)
         self.logo.setPixmap(pixmap)
-        self.logo.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        self.logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.logo, 0, 2) #Logo spans 1 row, 1 col
 
 
@@ -113,7 +115,7 @@ class IDS_GUI(QMainWindow):
         #Button Layout 3 - File Integrity Monitor
         button_layout3 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.monitor_button3 = QPushButton("FILE INTEGRITY BUTTON 3")
+        self.monitor_button3 = QPushButton("File Integrity Scan")
         self.monitor_button3.setStyleSheet("background-color: blue; color: white; padding: 10px;")
         self.monitor_button3.clicked.connect(self.monitor_files)
 
@@ -265,7 +267,7 @@ class IDS_GUI(QMainWindow):
 
             self.terminal_output.append(summary)
 
-
+    #change value of "Ethernet" in the sniff command to "Wi-Fi" and if ncap is installed on host computer it will run off of Wi-Fi - this needs to be addressed in terminal
         def sniff_thread():
             try:
                 sniff(filter=f"ip and net {ip}" if ip else "ip", prn=packet_sniffer, count=count, iface="Ethernet", store=False)
@@ -310,21 +312,26 @@ class IDS_GUI(QMainWindow):
         for file in file_list:
             new_hash = self.calculate_hash(file)
             if new_hash is None:
-                self.terminal_output.append(f"[WARNING] {file} not found!")
+                self.editColors(f"[WARNING] {file} not found!", "orange")
                 continue
             
             if file in hashes:
                 if hashes[file] != new_hash:
-                    self.terminal_output.append(f"[ALERT!!] {file} has been modified!")
+                    self.editColors(f"[ALERT!!] {file} has been modified!", "red")
                 else:
-                    self.terminal_output.append(f"[OK] {file} is unchanged.")
+                    self.editColors(f"[OK] {file} is unchanged.","green")
             else:
-                self.terminal_output.append(f"[NEW] Tracking new file: {file}")
+                self.editColors(f"[NEW] Tracking new file: {file}", "blue")
             
             hashes[file] = new_hash
         
         self.save_hashes(hashes)
-        self.terminal_output.append("[INFO] File Hash monitoring complete.")
+        self.editColors("[INFO] File Hash monitoring complete.", "cyan")
+
+    def editColors(self, message, color):
+            self.terminal_output.moveCursor(QTextCursor.MoveOperation.End)
+            self.terminal_output.insertHtml(f'<span style="color:{color}">{message}</span><br>')
+            self.terminal_output.moveCursor
 
     # ----------- END OF file hash functions -----------------      
         
