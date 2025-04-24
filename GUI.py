@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QGridLayout, QInputDialog, QStackedLayout, QMessageBox 
 )
 from PyQt6.QtCore import QProcess, Qt
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QTextCursor
 from scapy.all import sniff, get_if_list
 import threading
 import ipaddress
@@ -310,21 +310,26 @@ class IDS_GUI(QMainWindow):
         for file in file_list:
             new_hash = self.calculate_hash(file)
             if new_hash is None:
-                self.terminal_output.append(f"[WARNING] {file} not found!")
+                self.editColors(f"[WARNING] {file} not found!", "orange")
                 continue
             
             if file in hashes:
                 if hashes[file] != new_hash:
-                    self.terminal_output.append(f"[ALERT!!] {file} has been modified!")
+                    self.editColors(f"[ALERT!!] {file} has been modified!", "red")
                 else:
-                    self.terminal_output.append(f"[OK] {file} is unchanged.")
+                    self.editColors(f"[OK] {file} is unchanged.","green")
             else:
-                self.terminal_output.append(f"[NEW] Tracking new file: {file}")
+                self.editColors(f"[NEW] Tracking new file: {file}", "blue")
             
             hashes[file] = new_hash
         
         self.save_hashes(hashes)
-        self.terminal_output.append("[INFO] File Hash monitoring complete.")
+        self.editColors("[INFO] File Hash monitoring complete.", "cyan")
+
+    def editColors(self, message, color):
+            self.terminal_output.moveCursor(QTextCursor.MoveOperation.End)
+            self.terminal_output.insertHtml(f'<span style="color:{color}">{message}</span><br>')
+            self.terminal_output.moveCursor
 
     # ----------- END OF file hash functions -----------------      
         
