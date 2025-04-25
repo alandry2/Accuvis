@@ -72,11 +72,16 @@ class IDS_GUI(QMainWindow):
         #Button Layout 1 - Packet Scanner
         button_layout1 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.sniff_button = QPushButton("Start Packet Sniffer")
+        self.sniff_button = QPushButton("Start Packet Sniff: Ethernet")
         self.sniff_button.setStyleSheet("background-color: orange; color: white; padding: 10px;")
-        self.sniff_button.clicked.connect(self.run_sniffer)
+        self.sniff_button.clicked.connect(lambda: self.run_sniffer("Ethernet"))
+
+        self.sniff_button2 = QPushButton("Start Packet Sniff: Wi-Fi")
+        self.sniff_button2.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
+        self.sniff_button2.clicked.connect(lambda: self.run_sniffer("Wi-Fi"))
 
         button_layout1.addWidget(self.sniff_button)
+        button_layout1.addWidget(self.sniff_button2)
 
         # Button layout positioned bottom right
         button_container1 = QWidget()
@@ -229,7 +234,7 @@ class IDS_GUI(QMainWindow):
         if error:
             self.terminal_output.append(error)
 
-    def run_sniffer(self):
+    def run_sniffer(self, interface_name):
         ip, ok = QInputDialog.getText(self, "Target IP/Network", "Enter IP or network (e.g. 192.168.1.0/24):")
         if not ok:
             return
@@ -270,13 +275,14 @@ class IDS_GUI(QMainWindow):
     #change value of "Ethernet" in the sniff command to "Wi-Fi" and if ncap is installed on host computer it will run off of Wi-Fi - this needs to be addressed in terminal
         def sniff_thread():
             try:
-                sniff(filter=f"ip and net {ip}" if ip else "ip", prn=packet_sniffer, count=count, iface="Ethernet", store=False)
+                sniff(filter=f"ip and net {ip}" if ip else "ip", prn=packet_sniffer, count=count, iface=interface_name, store=False)
                 self.terminal_output.append("[INFO] Packet sniffing completed.")
             except Exception as e:
                 self.terminal_output.append(f"[ERROR] {str(e)}")
 
         thread = threading.Thread(target=sniff_thread, daemon=True)
         thread.start()
+
 
     #------------ END of Packet Scanner Function ------------------------
 
