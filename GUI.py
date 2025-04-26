@@ -38,6 +38,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
 from collections import deque
+from queue import Queue
 
 
 
@@ -52,6 +53,14 @@ class IDS_GUI(QMainWindow):
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.flush_packets)
         self.update_timer.start(100) 
+
+    #the deque above is for safe packet scanner output
+    # this queue is developed for the safe and timely output of the ACCUVIS LIVE function
+        self.message_queue = Queue()
+
+        self.message_timer = QTimer()
+        self.message_timer.timeout.connect(self.process_message_queue)
+        self.message_timer.start(100)
 
         #Ascii Art : Accuvis
         figlet = Figlet(font='standard')
@@ -314,9 +323,9 @@ class IDS_GUI(QMainWindow):
 
     #Dyanmic Button Layout
 
-    #okay this is freezing --- maybe try scanning 10 packets then scanning the files then do the loops
+    #had to set a queue for scanning packets that way they are not all shoved to the GUI at once to prevent crashing
     def start_accuvis_live(self):
-        self.editColors("[LIVE] Accuvis Live Monitoring Started...", "cyan")
+        self.message_queue.put(("cyan", "[LIVE] Accuvis Live Monitoring Started..."))
         self.live_monitoring = True
 
         packet_thread = threading.Thread(target=self.accuvis_live_sniff, daemon=True)
@@ -327,7 +336,12 @@ class IDS_GUI(QMainWindow):
 
     def stop_accuvis_live(self):
         self.live_monitoring = False
-        self.editColors("[LIVE] Accuvis Live Monitoring Stopped.", "cyan")
+        self.message_queue.put(("cyan", "[LIVE] Accuvis Live Monitoring Stopped."))
+
+    def process_message_queue(self):
+        while not self.message_queue.empty():
+            color, message = self.message_queue.get()
+            self.editColors(message, color)
 
     def display_output(self):
         #Display terminal output in the GUI
@@ -340,26 +354,26 @@ class IDS_GUI(QMainWindow):
             self.terminal_output.append(error)
 
     def accuvis_live_sniff(self):
-        insecure_ports = [21, 23, 445, 135, 139, 3389]  # Bad ports list
+        insecure_ports = [21, 23, 445, 135, 139, 3389]  # these are the ports that are commonly unsafe, and are the ones that will be searched for for accuvis live exceptions
 
         def filter_packet(packet):
             if packet.haslayer('TCP') or packet.haslayer('UDP'):
                 sport = packet.sport
                 dport = packet.dport
                 if sport in insecure_ports or dport in insecure_ports:
-                    self.editColors(f"[!] Suspicious packet: {packet.summary()}", "red")
+                    self.message_queue.put(("red", f"[!] Suspicious packet: {packet.summary()}"))
 
         try:
             while self.live_monitoring:
                 sniff(
                     prn=filter_packet,
                     store=False,
-                    count=50,  # Only sniff 50 packets at a time
+                    count=500,  # the message for showing progress of Accuvis live will ONLY show up after this amount of packets are scanned
                 )
-                # After every 50 packets, show this:
-                self.editColors("[+] Accuvis live monitoring is still running...", "green")
+                # this just keeps the user knowing that things are going on 
+                self.message_queue.put(("green", "[+] Accuvis live monitoring is still running..."))
         except Exception as e:
-            self.editColors(f"[ERROR] Accuvis live sniffer failed: {e}", "red")
+            self.message_queue.put(("red", f"[ERROR] Accuvis live sniffer failed: {e}"))
 
     def accuvis_file_monitor(self):
         hashes = self.load_hashes()
@@ -368,10 +382,10 @@ class IDS_GUI(QMainWindow):
             for file, old_hash in hashes.items():
                 new_hash = self.calculate_hash(file)
                 if new_hash is None:
-                    self.editColors(f"[WARNING] {file} not found!", "orange")
+                    self.message_queue.put(("orange", f"[WARNING] {file} not found!"))
                     continue
                 if new_hash != old_hash:
-                    self.editColors(f"[ALERT!!] {file} has been modified!", "red")
+                    self.message_queue.put(("red", f"[ALERT!!] {file} has been modified!"))
                     hashes[file] = new_hash  # update with new hash
 
             self.save_hashes(hashes)
