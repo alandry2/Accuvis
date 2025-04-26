@@ -28,6 +28,7 @@ import sys
 import hashlib
 import os
 import json
+from pyfiglet import Figlet
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
@@ -45,20 +46,25 @@ class IDS_GUI(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Network IDS GUI")
-        self.setGeometry(200, 200, 1000, 700)
+        self.setGeometry(100, 100, 700, 500)
+
+        #Ascii Art : Accuvis
+        figlet = Figlet(font='standard')
+        logo ="-_ Accuvis _-"
+        rendered_text = figlet.renderText(logo)
 
         # Main layout
         layout = QGridLayout()
         self.setStyleSheet("""
             QMainWindow {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                            stop:0 #1e3c72, stop:1 #2a5298);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,stop:0 #1e3c72, stop:1 #2a5298);
             }
         """)
         # Terminal-like display area (top left) the stylesheet is going to customize how it looks below
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
-        self.terminal_output.setPlaceholderText("Welcome to the Accuvis, your very own host-based IDS!! ")
+        self.terminal_output.append(rendered_text)
+        self.terminal_output.append("Welcome to the Accuvis, your very own host-based IDS!!\n ")
         self.terminal_output.setStyleSheet("""
             background-color: black;
             color: lime;
@@ -79,14 +85,11 @@ class IDS_GUI(QMainWindow):
         layout.addWidget(self.logo, 0, 2) #Logo spans 1 row, 1 col
 
 
-
-
-
         # Dynamic input Buttons (bottom right buttons are going here)
         self.stackLayout = QStackedLayout()
 
         #Button Layout 1 - Packet Scanner
-        button_layout1 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        button_layout1 = QVBoxLayout() 
         
         self.sniff_button = QPushButton("Start Packet Sniff: Ethernet")
         self.sniff_button.setStyleSheet("background-color: orange; color: white; padding: 10px;")
@@ -105,22 +108,61 @@ class IDS_GUI(QMainWindow):
         self.stackLayout.addWidget(button_container1) 
 
         #Button Layout 2 - Port Scanner
-        button_layout2 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        button_layout2 = QVBoxLayout() 
         
         self.targetIpAddress = QTextEdit()
         self.targetIpAddress.setPlaceholderText("Input Target IP Address")
-        self.targetIpAddress.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.targetIpAddress.setStyleSheet("""
+            QTextEdit {
+                background-color: #000;
+                color: #fff;
+                padding: 6px;
+                font-size: 12px;
+                border: 1px solid #222;
+                border-radius: 5px;
+            }
+        """)
 
         self.startPortNum = QTextEdit()
         self.startPortNum.setPlaceholderText(" Start Port Number")
-        self.startPortNum.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.startPortNum.setStyleSheet("""
+            QTextEdit {
+                background-color: #000;
+                color: #fff;
+                padding: 6px;
+                font-size: 12px;
+                border: 1px solid #222;
+                border-radius: 5px;
+            }
+        """)
 
         self.endPortNum = QTextEdit()
         self.endPortNum.setPlaceholderText("Input End Port Number")
-        self.endPortNum.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.endPortNum.setStyleSheet("""
+            QTextEdit {
+                background-color: #000;
+                color: #fff;
+                padding: 6px;
+                font-size: 12px;
+                border: 1px solid #222;
+                border-radius: 5px;
+            }
+        """)
 
         self.start_port_scan = QPushButton("Start Port Scan")
-        self.start_port_scan.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.start_port_scan.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                padding: 8px;
+                font-size: 13px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #fcf24f;
+                color: black;
+            }
+        """)
         self.start_port_scan.clicked.connect(self.prePortScan)
 
         button_layout2.addWidget(self.targetIpAddress)
@@ -128,10 +170,10 @@ class IDS_GUI(QMainWindow):
         button_layout2.addWidget(self.endPortNum)
         button_layout2.addWidget(self.start_port_scan)
 
-        # Button layout for second set of buttons with container
         button_container2 = QWidget()
         button_container2.setLayout(button_layout2)
         self.stackLayout.addWidget(button_container2)
+
 
         #Button Layout 3 - File Integrity Monitor
         button_layout3 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
@@ -142,10 +184,10 @@ class IDS_GUI(QMainWindow):
 
         button_layout3.addWidget(self.monitor_button3)
 
-        # Button layout positioned bottom right
         button_container3 = QWidget()
         button_container3.setLayout(button_layout3)
         self.stackLayout.addWidget(button_container3)
+
 
         #Button Layout 4 - Accuvis LIVE this will eventually run as the main IDS function
         button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
@@ -179,7 +221,7 @@ class IDS_GUI(QMainWindow):
         #adding stackedwiget into layout of page
         self.stackedContainer = QWidget()
         self.stackedContainer.setLayout(self.stackLayout)
-        layout.addWidget(self.stackedContainer, 1, 2,) #this value was previously 1, 2 for horizontal buttons (side note)
+        layout.addWidget(self.stackedContainer, 1, 2,)
 
 
 
@@ -188,16 +230,64 @@ class IDS_GUI(QMainWindow):
         button_layout2 = QHBoxLayout()
 
         self.function_PacketScanner = QPushButton("Packet Scanner")
-        self.function_PacketScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(0))#lambda is a helper method; makes function into 1 line
+        self.function_PacketScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(0))
+        self.function_PacketScanner.setStyleSheet("""
+                QPushButton {
+                    background-color: #f44ffc; 
+                    color: white; 
+                    border-radius: 8px; 
+                    padding: 10px; 
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background-color: #858585;
+                }
+            """)
 
         self.function_PortScanner = QPushButton("Port Scanner")
         self.function_PortScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(1))
+        self.function_PortScanner.setStyleSheet("""
+                QPushButton {
+                    background-color: #4aee56; 
+                    color: white; 
+                    border-radius: 8px; 
+                    padding: 10px; 
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background-color: #858585;
+                }
+            """)
 
         self.function_FileIntegritMon = QPushButton("File Integrity Monitor")
         self.function_FileIntegritMon.clicked.connect(lambda: self.stackLayout.setCurrentIndex(2))
+        self.function_FileIntegritMon.setStyleSheet("""
+                QPushButton {
+                    background-color: #fc694f; 
+                    color: white;
+                    border-radius: 8px; 
+                    padding: 10px;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background-color: #858585;
+                }
+            """)
 
         self.function_AccuvisActive = QPushButton("Accuvis LIVE")
         self.function_AccuvisActive.clicked.connect(lambda: self.stackLayout.setCurrentIndex(3))
+        self.function_AccuvisActive.setStyleSheet("""
+                QPushButton {
+                    background-color: #4f6efc; 
+                    color: white; 
+                    border-radius: 8px; 
+                    padding: 10px; 
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background-color: #858585;
+                }
+            """)
 
         button_layout2.addWidget(self.function_PacketScanner)
         button_layout2.addWidget(self.function_PortScanner)
@@ -230,18 +320,18 @@ class IDS_GUI(QMainWindow):
     #Dyanmic Button Layout
 
     def start_scan(self):
-        """Start a Scapy scan or network command"""
+        #Start a Scapy scan or network command
         command = "ping -c 4 8.8.8.8"  
         self.process.start(command)
 
     def stop_scan(self):
-        """Stop the scan process"""
+        #Stop the scan process
         if self.process.state() == QProcess.ProcessState.Running:
             self.process.kill()
             self.terminal_output.append("\nScan stopped.")
 
     def display_output(self):
-        """Display terminal output in the GUI"""
+        #Display terminal output in the GUI
         output = self.process.readAllStandardOutput().data().decode()
         error = self.process.readAllStandardError().data().decode()
 
@@ -392,20 +482,21 @@ class IDS_GUI(QMainWindow):
             
 
     #given the port range, it will divide the port range evenly into a list to be assigned to a worker
-    def assign_thread_ports(self, port_range):
+    def assign_thread_ports(self, port_range,max_workers):
 
-        #Defining amount of threads being used here
-        MAX_WORKERS = 20
         port_chunks = []
+        start = int(port_range[0])
+        end = int(port_range[1])
+        #divide chunks evenly throughout 
+        chunk_size = (end - start) // max_workers
 
-        #Divides ports even for every worker (in this case 20)
-        chunk_size = int((int(port_range[1]) - int(port_range[0])) / MAX_WORKERS)
-
-        for i in range(MAX_WORKERS):
-            start = int(port_range[0]) + (chunk_size * i)
-            end = start + chunk_size
-            port_chunks.append([start, end])
+        for i in range(max_workers):
+            chunk_start = start + i * chunk_size
+            #if a remainder is left, it will be accounted for 
+            chunk_end = start + (i+1) * chunk_size if i< max_workers - 1 else end
+            port_chunks.append([chunk_start, chunk_end])
         return port_chunks
+        
 
     def check_for_cves(self):
 
@@ -480,7 +571,7 @@ class IDS_GUI(QMainWindow):
 
 
             #parameter to divide port range evenly
-            port_chunks = self.assign_thread_ports(port_range)
+            port_chunks = self.assign_thread_ports(port_range,MAX_WORKERS)
 
             self.terminal_output.append(f"Now scanning {target_ip_addr} from ports {start_port} to {end_port}.")
             start_time = time.time()
@@ -500,7 +591,7 @@ class IDS_GUI(QMainWindow):
                 for item in sorted(scan_results, key=lambda x: x["port"]):
                     self.terminal_output.append(f"[!]Port {item["port"]} is open!")
                     self.terminal_output.append(f"     Service: {item["service"]}")
-                    self.terminal_output.append(f"     Common Vulnerability & Exposures Associated with Port(CVEs):")
+                    self.terminal_output.append(f"     Common Vulnerability & Exploits with Port(CVEs):")
                     for cve in item["cves"]:
                         self.terminal_output.append(f"     - {cve}\n")
 
@@ -508,6 +599,7 @@ class IDS_GUI(QMainWindow):
         else:
             invalidPortsDialog.exec()
     # ----------- END OF port scanner functions -----------------
+    
 
 if __name__ == "__main__":
 
