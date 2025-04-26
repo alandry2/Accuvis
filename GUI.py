@@ -46,7 +46,7 @@ class IDS_GUI(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Network IDS GUI")
-        self.setGeometry(100, 100, 700, 500)
+        self.setGeometry(100, 100, 725, 500)
 
         #Ascii Art : Accuvis
         figlet = Figlet(font='standard')
@@ -192,26 +192,16 @@ class IDS_GUI(QMainWindow):
         #Button Layout 4 - Accuvis LIVE this will eventually run as the main IDS function
         button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
-        self.start_button4 = QPushButton("ACCUVIS LIVE BUTTON 1")
+        self.start_button4 = QPushButton("Start ACCUVIS LIVE")
         self.start_button4.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
-        self.start_button4.clicked.connect(self.start_scan)
+        self.start_button4.clicked.connect(self.accuvis_live_sniff)
 
-        self.stop_button4 = QPushButton("ACCUVIS LIVE BUTTON 2")
-        self.stop_button4.setStyleSheet("background-color: #f44236; color: white; padding: 10px;")
-        self.stop_button4.clicked.connect(self.stop_scan)
-
-        self.monitor_button4 = QPushButton("ACCUVIS LIVE BUTTON 3")
-        self.monitor_button4.setStyleSheet("background-color: blue; color: white; padding: 10px;")
-        self.monitor_button4.clicked.connect(self.monitor_files)
-
-        self.sniff_button4 = QPushButton("ACCUVIS LIVE BUTTON 4")
-        self.sniff_button4.setStyleSheet("background-color: orange; color: white; padding: 10px;")
-        self.sniff_button4.clicked.connect(self.run_sniffer)
+        self.stop_button4 = QPushButton("Stop ACCUVIS LIVE")
+        self.stop_button4.setStyleSheet("background-color: #fc694f; color: white; padding: 10px;")
+        self.stop_button4.clicked.connect(self.stop_accuvis_live)
 
         button_layout4.addWidget(self.start_button4)
         button_layout4.addWidget(self.stop_button4)
-        button_layout4.addWidget(self.monitor_button4)
-        button_layout4.addWidget(self.sniff_button4)
 
         # Button layout positioned bottom right
         button_container4 = QWidget()
@@ -319,16 +309,22 @@ class IDS_GUI(QMainWindow):
 
     #Dyanmic Button Layout
 
-    def start_scan(self):
-        #Start a Scapy scan or network command
-        command = "ping -c 4 8.8.8.8"  
-        self.process.start(command)
+    #okay this is freezing --- maybe try scanning 10 packets then scanning the files then do the loops
+    def start_accuvis_live(self):
+        self.editColors("[LIVE] Accuvis Live Monitoring Started...", "cyan")
+        self.live_monitoring = True
 
-    def stop_scan(self):
-        #Stop the scan process
-        if self.process.state() == QProcess.ProcessState.Running:
-            self.process.kill()
-            self.terminal_output.append("\nScan stopped.")
+        # Create packet sniffer thread
+        packet_thread = threading.Thread(target=self.accuvis_packet_sniffer, daemon=True)
+        packet_thread.start()
+
+        # Create file monitor thread
+        file_thread = threading.Thread(target=self.accuvis_file_monitor, daemon=True)
+        file_thread.start()
+
+    def stop_accuvis_live(self):
+        self.live_monitoring = False
+        self.editColors("[LIVE] Accuvis Live Monitoring Stopped.", "cyan")
 
     def display_output(self):
         #Display terminal output in the GUI
@@ -339,6 +335,38 @@ class IDS_GUI(QMainWindow):
             self.terminal_output.append(output)
         if error:
             self.terminal_output.append(error)
+
+    def accuvis_live_sniff(self):
+        insecure_ports = [21, 23, 445, 135, 139, 3389]  # FTP, Telnet, SMB, RDP, etc.
+
+        def filter_packet(packet):
+            if packet.haslayer('TCP') or packet.haslayer('UDP'):
+                sport = packet.sport
+                dport = packet.dport
+                if sport in insecure_ports or dport in insecure_ports:
+                    self.editColors(f"[!] Suspicious packet: {packet.summary()}", "red")
+
+        try:
+            sniff(prn=filter_packet, store=False, stop_filter=lambda x: not self.live_monitoring)
+        except Exception as e:
+            self.editColors(f"[ERROR] Packet sniffer failed: {e}", "red")
+
+    def accuvis_file_monitor(self):
+        hashes = self.load_hashes()
+
+        while self.live_monitoring:
+            for file, old_hash in hashes.items():
+                new_hash = self.calculate_hash(file)
+                if new_hash is None:
+                    self.editColors(f"[WARNING] {file} not found!", "orange")
+                    continue
+                if new_hash != old_hash:
+                    self.editColors(f"[ALERT!!] {file} has been modified!", "red")
+                    hashes[file] = new_hash  # update with new hash
+
+            self.save_hashes(hashes)
+            time.sleep(10)  # wait 10 seconds before checking again
+
 
     def run_sniffer(self, interface_name):
         ip, ok = QInputDialog.getText(self, "Target IP/Network", "Enter IP or network (e.g. 192.168.1.0/24):")
