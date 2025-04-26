@@ -591,7 +591,7 @@ class IDS_GUI(QMainWindow):
                 for item in sorted(scan_results, key=lambda x: x["port"]):
                     self.terminal_output.append(f"[!]Port {item["port"]} is open!")
                     self.terminal_output.append(f"     Service: {item["service"]}")
-                    self.terminal_output.append(f"     Common Vulnerability & Exploits with Port(CVEs):")
+                    self.terminal_output.append(f"     Common Vulnerability & Exposures Associated with Port(CVEs):")
                     for cve in item["cves"]:
                         self.terminal_output.append(f"     - {cve}\n")
 
