@@ -28,6 +28,7 @@ import sys
 import hashlib
 import os
 import json
+from pyfiglet import Figlet
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
@@ -47,6 +48,11 @@ class IDS_GUI(QMainWindow):
         self.setWindowTitle("Network IDS GUI")
         self.setGeometry(200, 200, 1000, 700)
 
+        #Ascii Art : Accuvis
+        figlet = Figlet(font='standard')
+        logo ="-_ Accuvis _-"
+        rendered_text = figlet.renderText(logo)
+
         # Main layout
         layout = QGridLayout()
         self.setStyleSheet("""
@@ -58,7 +64,8 @@ class IDS_GUI(QMainWindow):
         # Terminal-like display area (top left) the stylesheet is going to customize how it looks below
         self.terminal_output = QTextEdit(self)
         self.terminal_output.setReadOnly(True)
-        self.terminal_output.setPlaceholderText("Welcome to the Accuvis, your very own host-based IDS!! ")
+        self.terminal_output.append(rendered_text)
+        self.terminal_output.append("Welcome to the Accuvis, your very own host-based IDS!! ")
         self.terminal_output.setStyleSheet("""
             background-color: black;
             color: lime;
@@ -79,14 +86,11 @@ class IDS_GUI(QMainWindow):
         layout.addWidget(self.logo, 0, 2) #Logo spans 1 row, 1 col
 
 
-
-
-
         # Dynamic input Buttons (bottom right buttons are going here)
         self.stackLayout = QStackedLayout()
 
         #Button Layout 1 - Packet Scanner
-        button_layout1 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        button_layout1 = QVBoxLayout() 
         
         self.sniff_button = QPushButton("Start Packet Sniff: Ethernet")
         self.sniff_button.setStyleSheet("background-color: orange; color: white; padding: 10px;")
@@ -105,19 +109,19 @@ class IDS_GUI(QMainWindow):
         self.stackLayout.addWidget(button_container1) 
 
         #Button Layout 2 - Port Scanner
-        button_layout2 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
+        button_layout2 = QVBoxLayout() 
         
         self.targetIpAddress = QTextEdit()
         self.targetIpAddress.setPlaceholderText("Input Target IP Address")
-        self.targetIpAddress.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.targetIpAddress.setStyleSheet("background-color: yellow; color: white; padding: 10px;")
 
         self.startPortNum = QTextEdit()
         self.startPortNum.setPlaceholderText(" Start Port Number")
-        self.startPortNum.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.startPortNum.setStyleSheet("background-color: blue; color: white; padding: 10px;")
 
         self.endPortNum = QTextEdit()
         self.endPortNum.setPlaceholderText("Input End Port Number")
-        self.endPortNum.setStyleSheet("background-color: black; color: white; padding: 10px;")
+        self.endPortNum.setStyleSheet("background-color: white; color: white; padding: 10px;")
 
         self.start_port_scan = QPushButton("Start Port Scan")
         self.start_port_scan.setStyleSheet("background-color: black; color: white; padding: 10px;")
@@ -128,10 +132,10 @@ class IDS_GUI(QMainWindow):
         button_layout2.addWidget(self.endPortNum)
         button_layout2.addWidget(self.start_port_scan)
 
-        # Button layout for second set of buttons with container
         button_container2 = QWidget()
         button_container2.setLayout(button_layout2)
         self.stackLayout.addWidget(button_container2)
+
 
         #Button Layout 3 - File Integrity Monitor
         button_layout3 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
@@ -142,10 +146,10 @@ class IDS_GUI(QMainWindow):
 
         button_layout3.addWidget(self.monitor_button3)
 
-        # Button layout positioned bottom right
         button_container3 = QWidget()
         button_container3.setLayout(button_layout3)
         self.stackLayout.addWidget(button_container3)
+
 
         #Button Layout 4 - Accuvis LIVE this will eventually run as the main IDS function
         button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
