@@ -488,7 +488,7 @@ class IDS_GUI(QMainWindow):
         start = int(port_range[0])
         end = int(port_range[1])
         #divide chunks evenly throughout 
-        chunk_size = (end - start) // max_workers
+        chunk_size = (end - start + 1) // max_workers
 
         for i in range(max_workers):
             chunk_start = start + i * chunk_size
@@ -533,7 +533,7 @@ class IDS_GUI(QMainWindow):
     def scan(self, target_ip_address, port_chunk):
         #every port will be checked, if SYN/ACK is received, port is open, otherwise (no response or error) it will return nothing
     #note : ports that are filtered are not accounted for.
-        for port in range(port_chunk[0],port_chunk[1]):
+        for port in range(port_chunk[0],port_chunk[1]+1):
             try:
                 socket_scan = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 socket_scan.settimeout(1)
@@ -548,6 +548,7 @@ class IDS_GUI(QMainWindow):
 
                     scan_results.append({"port": port, "service": service, "cves": []})
                
+                socket.close()
                 socket_scan.close()
 
             except: 
@@ -573,29 +574,29 @@ class IDS_GUI(QMainWindow):
             #parameter to divide port range evenly
             port_chunks = self.assign_thread_ports(port_range,MAX_WORKERS)
 
-            self.terminal_output.append(f"Now scanning {target_ip_addr} from ports {start_port} to {end_port}.")
+            self.terminal_output.append(f"\n\nNow scanning {target_ip_addr} from ports {start_port} to {end_port}.\n")
             start_time = time.time()
 
             #executing scan function to a thread to asynchronously run.
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            with ThreadPoolExecutor(max_workers = MAX_WORKERS) as executor:
                 executor.map(self.scan, [target_ip_addr] * len(port_chunks),port_chunks)
                 
             self.check_for_cves()
             end_time = time.time()
-    
-            self.terminal_output.append(f"Scanned {int(port_range[1])-int(port_range[0])} ports in {end_time-start_time} seconds")
 
             if not scan_results:
                 self.terminal_output.append("[!] No Ports are open in the given range!")
             else:
                 for item in sorted(scan_results, key=lambda x: x["port"]):
-                    self.terminal_output.append(f"[!]Port {item["port"]} is open!")
-                    self.terminal_output.append(f"     Service: {item["service"]}")
-                    self.terminal_output.append(f"     Common Vulnerability & Exposures Associated with Port(CVEs):")
+                    self.terminal_output.append(f"<span style='color: white';>[!] Port {item["port"]} is open!</span>")
+                    self.terminal_output.append(f"<span style='color :DodgerBlue';>[?]Service: {item["service"]}</span>")
+                    self.terminal_output.append(f"""<span style='color: red;'>        
+                                            [$]Common Vulnerability & Exposures Associated with Port(CVEs):</span>""")
                     for cve in item["cves"]:
                         self.terminal_output.append(f"     - {cve}\n")
 
-            self.terminal_output.append(f"Scanned {total_ports+1} ports in {end_time-start_time:.2f} seconds")
+            scan_results.clear()
+            self.terminal_output.append(f"\nScanned {total_ports+1} ports in {end_time-start_time:.2f} seconds\n\n")
         else:
             invalidPortsDialog.exec()
     # ----------- END OF port scanner functions -----------------
