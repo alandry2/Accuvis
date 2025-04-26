@@ -20,3 +20,7 @@ For running in IDE: Make sure your Python/Scripts folder is in your environmenta
 **Changes made**
 Pcapy will be replaced with Socket library
 main
+
+=========
+Implementation of National Vulnerability Database (NVD) to output CVES related to open port
+ELEOPER IS SHARING HIS NVD API KEY INSIDE CODE 

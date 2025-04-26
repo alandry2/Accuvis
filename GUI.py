@@ -1,3 +1,12 @@
+#Main Interface
+
+#-------------------- Packet Scanner ----------------------
+from scapy.all import sniff, get_if_list
+import threading
+import ipaddress
+from pathlib import Path
+
+#-------------------- Port Scanner ----------------------
 #ThreadPoolExecutor does asynchronous execution with threads.
 from concurrent.futures import ThreadPoolExecutor
 #Socket library that will be used to attempt to form a TCP connection.
@@ -6,7 +15,15 @@ import socket
 import time
 #To check pattern of IP address
 import re
+import requests
 
+#Scan sctructure : [PORT] | [SERVICE] | [CVES]
+scan_results = []
+
+#NVD API KEY
+api_key = "1f28c9fe-e679-472e-abc5-fd363f0a06eb"
+
+#-------------------- GUI ----------------------
 import sys
 import hashlib
 import os
@@ -19,10 +36,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QProcess, Qt
 from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
-from scapy.all import sniff, get_if_list
-import threading
-import ipaddress
-from pathlib import Path
+
+
+
 
 class IDS_GUI(QMainWindow):
     def __init__(self):
@@ -391,51 +407,110 @@ class IDS_GUI(QMainWindow):
             port_chunks.append([start, end])
         return port_chunks
 
-    def scan(self, target_ip_address, port_chunk):
-        self.terminal_output.append(f"Now scanning {target_ip_address} from {port_chunk[0]} to {port_chunk[1]}.")
+    def check_for_cves(self):
 
+        for item in scan_results:
+
+            service = item["service"]
+            if not service or service in ["unnknown", ""]:
+                item["cves"].append("[-] Unknown Service.")
+                continue
+            
+            try:
+                #request to obtain top 3 cves of service from NVD Website
+                headers = {"apiKey": api_key}
+                url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={service}&resultsPerPage=3"
+                response = requests.get(url,headers=headers)
+
+                if response.status_code == 200:
+                    results = response.json().get("vulnerabilities", [])
+                    if not results:
+                        item["cves"].append("[-] No CVEs found.")
+                
+                    for vulnerabilities in results:
+
+                        #creates a list of top 3 cves, adds to service_cves list, then clears list for next service
+                        cve_of_service = vulnerabilities["cve"]["id"]
+                        descriptions = vulnerabilities["cve"].get("descriptions",[])
+                        desc_of_cve = vulnerabilities["cve"]["descriptions"][0]["value"] if descriptions else "No description avaialable."
+                        item["cves"].append(f"{cve_of_service}: {desc_of_cve}")
+                else:
+                    item["cves"].append("[-] Failed to fetch CVEs")
+            except:
+                self.terminal_output.append("[X] Error has Occurred!")
+
+    def scan(self, target_ip_address, port_chunk):
         #every port will be checked, if SYN/ACK is received, port is open, otherwise (no response or error) it will return nothing
-        for port in range(int(port_chunk[0]),int(port_chunk[1])):
+    #note : ports that are filtered are not accounted for.
+        for port in range(port_chunk[0],port_chunk[1]):
             try:
                 socket_scan = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 socket_scan.settimeout(1)
+                result = socket_scan.connect_ex((target_ip_address,port))
+                
+                #open ports with known service will be added, else "unknown"
+                if result == 0:
+                    try:
+                        service = socket.getservbyport(port, "tcp")
+                    except: 
+                        service = "unknown"
 
-                socket_scan.connect_ex((target_ip_address,port))
-                self.terminal_output.append(f"[!] Port {port} is open!", sep="")
+                    scan_results.append({"port": port, "service": service, "cves": []})
+               
+                socket_scan.close()
+
             except: 
-                None
+                continue 
 
         #input from user - target IP addr, start port, end port
     def portScan(self, target_ip_addr, start_port, end_port):
-
-        MAX_WORKERS = 20
 
         invalidPortsDialog = QMessageBox()
         invalidPortsDialog.setWindowTitle("Error Has Occurred")
         invalidPortsDialog.setText("Start Port Must Begin Earlier Than End Port. Ex. 1-10")
     
         if (start_port < end_port):
-
+            
             port_range = [start_port,end_port]
+            total_ports = int(end_port)-int(start_port)
+
+            #max amount of threads that will execute asynchronously
+            #depending on given workers, it changes time it takes of port scanner
+            MAX_WORKERS = 1 if total_ports < 20 else 20
+
 
             #parameter to divide port range evenly
             port_chunks = self.assign_thread_ports(port_range)
 
+            self.terminal_output.append(f"Now scanning {target_ip_addr} from ports {start_port} to {end_port}.")
             start_time = time.time()
 
             #executing scan function to a thread to asynchronously run.
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 executor.map(self.scan, [target_ip_addr] * len(port_chunks),port_chunks)
                 
+            self.check_for_cves()
             end_time = time.time()
     
             self.terminal_output.append(f"Scanned {int(port_range[1])-int(port_range[0])} ports in {end_time-start_time} seconds")
 
+            if not scan_results:
+                self.terminal_output.append("[!] No Ports are open in the given range!")
+            else:
+                for item in sorted(scan_results, key=lambda x: x["port"]):
+                    self.terminal_output.append(f"[!]Port {item["port"]} is open!")
+                    self.terminal_output.append(f"     Service: {item["service"]}")
+                    self.terminal_output.append(f"     Common Vulnerability & Exposures Associated with Port(CVEs):")
+                    for cve in item["cves"]:
+                        self.terminal_output.append(f"     - {cve}\n")
+
+            self.terminal_output.append(f"Scanned {total_ports+1} ports in {end_time-start_time:.2f} seconds")
         else:
             invalidPortsDialog.exec()
     # ----------- END OF port scanner functions -----------------
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
     window = IDS_GUI()
     window.show()
