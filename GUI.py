@@ -1,9 +1,8 @@
 #Main Interface
 
 #-------------------- Packet Scanner ----------------------
-from scapy.all import sniff, get_if_list
+from scapy.all import sniff
 import threading
-import ipaddress
 from pathlib import Path
 
 #-------------------- Port Scanner ----------------------
@@ -14,20 +13,21 @@ import socket
 #To measure time it takes
 import time
 #To check pattern of IP address
-import re
 import requests
 
 #Scan sctructure : [PORT] | [SERVICE] | [CVES]
 scan_results = []
 
-#NVD API KEY
+#NVD API KEY {ELEO PER MAPUTE}
 api_key = "1f28c9fe-e679-472e-abc5-fd363f0a06eb"
 
-#-------------------- GUI ----------------------
-import sys
+#-------------------- File Integrity Monitor ----------------------
 import hashlib
 import os
 import json
+
+#-------------------- GUI ----------------------
+import sys
 from pyfiglet import Figlet
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
@@ -574,7 +574,7 @@ class IDS_GUI(QMainWindow):
             #parameter to divide port range evenly
             port_chunks = self.assign_thread_ports(port_range,MAX_WORKERS)
 
-            self.terminal_output.append(f"\n\nNow scanning {target_ip_addr} from ports {start_port} to {end_port}.\n")
+            self.terminal_output.append(f"\n\n[INFO] Now scanning {target_ip_addr} from ports {start_port} to {end_port}.\n")
             start_time = time.time()
 
             #executing scan function to a thread to asynchronously run.
@@ -591,12 +591,12 @@ class IDS_GUI(QMainWindow):
                     self.terminal_output.append(f"<span style='color: white';>[!] Port {item["port"]} is open!</span>")
                     self.terminal_output.append(f"<span style='color :DodgerBlue';>[?]Service: {item["service"]}</span>")
                     self.terminal_output.append(f"""<span style='color: red;'>        
-                                            [$]Common Vulnerability & Exposures Associated with Port(CVEs):</span>""")
+                                            [$] Common Vulnerability & Exposures Associated with Port(CVEs):</span>""")
                     for cve in item["cves"]:
                         self.terminal_output.append(f"     - {cve}\n")
 
             scan_results.clear()
-            self.terminal_output.append(f"\nScanned {total_ports+1} ports in {end_time-start_time:.2f} seconds\n\n")
+            self.terminal_output.append(f"\n[INFO] Scanned {total_ports+1} ports in {end_time-start_time:.2f} seconds\n\n")
         else:
             invalidPortsDialog.exec()
     # ----------- END OF port scanner functions -----------------

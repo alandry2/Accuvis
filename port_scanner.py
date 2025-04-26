@@ -9,7 +9,6 @@ import socket
 #To measure time it takes
 import time
 #To check pattern of IP address
-import re
 import requests
 
 #Scan sctructure : [PORT] | [SERVICE] | [CVES]
