@@ -20,10 +20,25 @@ For running in IDE: Make sure your Python/Scripts folder is in your environmenta
 **Changes made**
 Pcapy will be replaced with Socket library
 main
+Instead of implementing a login screen, we utilized our time to add-on 'Accuvis Live.' A live detection system that notifies user of malicious traffic.
 
-=========
+================================================================================================
 Implementation of National Vulnerability Database (NVD) to output CVES related to open port
 ELEOPER IS SHARING HIS NVD API KEY INSIDE CODE 
 
 ASCII ART 
 pip install pyfiglet
+
+================================================================================================
+Before Running Program, Please Install External Libraries :
+pip install PyQt6    - GUI
+pip install pcapy    - Packet Scanner
+pip install requests - Port Scanner(National Vulnerability Database)
+pip install pyfiglet - Ascii Art
+
+Native Python Libraries Used:
+socket  - Port Scanner
+hashlib - File Integrity Monitor
+
+Notes on Port Scanner :
+We are using an API key to generate faster and more requests from the National Vulnerability Database (NVD)
