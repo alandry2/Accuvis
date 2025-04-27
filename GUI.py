@@ -35,8 +35,10 @@ from PyQt6.QtWidgets import (
     QPushButton, QTextEdit, QHBoxLayout, QLabel, 
     QGridLayout, QInputDialog, QStackedLayout, QMessageBox 
 )
-from PyQt6.QtCore import QProcess, Qt
+from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
+from collections import deque
+from queue import Queue
 
 
 
@@ -47,6 +49,18 @@ class IDS_GUI(QMainWindow):
 
         self.setWindowTitle("Network IDS GUI")
         self.setGeometry(100, 100, 725, 500)
+        self.packet_queue = deque()
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.flush_packets)
+        self.update_timer.start(100) 
+
+    #the deque above is for safe packet scanner output
+    # this queue is developed for the safe and timely output of the ACCUVIS LIVE function
+        self.message_queue = Queue()
+
+        self.message_timer = QTimer()
+        self.message_timer.timeout.connect(self.process_message_queue)
+        self.message_timer.start(100)
 
         #Ascii Art : Accuvis
         figlet = Figlet(font='standard')
@@ -194,7 +208,7 @@ class IDS_GUI(QMainWindow):
         
         self.start_button4 = QPushButton("Start ACCUVIS LIVE")
         self.start_button4.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
-        self.start_button4.clicked.connect(self.accuvis_live_sniff)
+        self.start_button4.clicked.connect(self.start_accuvis_live)
 
         self.stop_button4 = QPushButton("Stop ACCUVIS LIVE")
         self.stop_button4.setStyleSheet("background-color: #fc694f; color: white; padding: 10px;")
@@ -309,22 +323,25 @@ class IDS_GUI(QMainWindow):
 
     #Dyanmic Button Layout
 
-    #okay this is freezing --- maybe try scanning 10 packets then scanning the files then do the loops
+    #had to set a queue for scanning packets that way they are not all shoved to the GUI at once to prevent crashing
     def start_accuvis_live(self):
-        self.editColors("[LIVE] Accuvis Live Monitoring Started...", "cyan")
+        self.message_queue.put(("cyan", "[LIVE] Accuvis Live Monitoring Started..."))
         self.live_monitoring = True
 
-        # Create packet sniffer thread
-        packet_thread = threading.Thread(target=self.accuvis_packet_sniffer, daemon=True)
+        packet_thread = threading.Thread(target=self.accuvis_live_sniff, daemon=True)
         packet_thread.start()
 
-        # Create file monitor thread
         file_thread = threading.Thread(target=self.accuvis_file_monitor, daemon=True)
         file_thread.start()
 
     def stop_accuvis_live(self):
         self.live_monitoring = False
-        self.editColors("[LIVE] Accuvis Live Monitoring Stopped.", "cyan")
+        self.message_queue.put(("cyan", "[LIVE] Accuvis Live Monitoring Stopped."))
+
+    def process_message_queue(self):
+        while not self.message_queue.empty():
+            color, message = self.message_queue.get()
+            self.editColors(message, color)
 
     def display_output(self):
         #Display terminal output in the GUI
@@ -337,19 +354,26 @@ class IDS_GUI(QMainWindow):
             self.terminal_output.append(error)
 
     def accuvis_live_sniff(self):
-        insecure_ports = [21, 23, 445, 135, 139, 3389]  # FTP, Telnet, SMB, RDP, etc.
+        insecure_ports = [21, 23, 445, 135, 139, 3389]  # these are the ports that are commonly unsafe, and are the ones that will be searched for for accuvis live exceptions
 
         def filter_packet(packet):
             if packet.haslayer('TCP') or packet.haslayer('UDP'):
                 sport = packet.sport
                 dport = packet.dport
                 if sport in insecure_ports or dport in insecure_ports:
-                    self.editColors(f"[!] Suspicious packet: {packet.summary()}", "red")
+                    self.message_queue.put(("red", f"[!] Suspicious packet: {packet.summary()}"))
 
         try:
-            sniff(prn=filter_packet, store=False, stop_filter=lambda x: not self.live_monitoring)
+            while self.live_monitoring:
+                sniff(
+                    prn=filter_packet,
+                    store=False,
+                    count=500,  # the message for showing progress of Accuvis live will ONLY show up after this amount of packets are scanned
+                )
+                # this just keeps the user knowing that things are going on 
+                self.message_queue.put(("green", "[+] Accuvis live monitoring is still running..."))
         except Exception as e:
-            self.editColors(f"[ERROR] Packet sniffer failed: {e}", "red")
+            self.message_queue.put(("red", f"[ERROR] Accuvis live sniffer failed: {e}"))
 
     def accuvis_file_monitor(self):
         hashes = self.load_hashes()
@@ -358,14 +382,17 @@ class IDS_GUI(QMainWindow):
             for file, old_hash in hashes.items():
                 new_hash = self.calculate_hash(file)
                 if new_hash is None:
-                    self.editColors(f"[WARNING] {file} not found!", "orange")
+                    self.message_queue.put(("orange", f"[WARNING] {file} not found!"))
                     continue
                 if new_hash != old_hash:
-                    self.editColors(f"[ALERT!!] {file} has been modified!", "red")
+                    self.message_queue.put(("red", f"[ALERT!!] {file} has been modified!"))
                     hashes[file] = new_hash  # update with new hash
 
             self.save_hashes(hashes)
-            time.sleep(10)  # wait 10 seconds before checking again
+            for _ in range(10):  # Instead of sleeping 10 sec straight
+                if not self.live_monitoring:
+                    break
+                time.sleep(1)  # sleep 1 second, check every second
 
 
     def run_sniffer(self, interface_name):
@@ -381,30 +408,33 @@ class IDS_GUI(QMainWindow):
         self.terminal_output.append(f"[INFO] Starting sniffer on: {ip or 'default'} for {count} packets...")
 
         def packet_sniffer(packet):
-            summary = f"<br><span style='color:white;'>{packet.summary()}</span>"
+            try:
+                summary = f"<br><span style='color:white;'>{packet.summary()}</span>"
 
-            if packet.haslayer("IP"):
-                summary += f"<br> Source IP: {packet['IP'].src}"
-                summary += f"<br> Destination IP: {packet['IP'].dst}"
+                if packet.haslayer("IP"):
+                    summary += f"<br> Source IP: {packet['IP'].src}"
+                    summary += f"<br> Destination IP: {packet['IP'].dst}"
 
-            if packet.haslayer("TCP") or packet.haslayer("UDP"):
-                protocol = "TCP" if packet.haslayer("TCP") else "UDP"
-                color = "cyan"
+                if packet.haslayer("TCP") or packet.haslayer("UDP"):
+                    protocol = "TCP" if packet.haslayer("TCP") else "UDP"
+                    color = "cyan"
 
-                # this array contains the unsafe ports that will determine the color of the Protocol in the packet summary
-                insecurePorts = [23, 21, 445, 135, 139, 3389] #this includes unsafe protocols such as 23 Telnet 21 FTP 445 SMB and more!
+                    insecurePorts = [23, 21, 445, 135, 139, 3389]
 
-                #the html style of design here is only used to make the output look nice compared to one solid color
-                def format_port(port):
-                    if port in insecurePorts:
-                        return f"<span style='color:red;font-weight:bold;'>{port}</span>"
-                    return f"<span style='color:blue;'>{port}</span>"
+                    def format_port(port):
+                        if port in insecurePorts:
+                            return f"<span style='color:red;font-weight:bold;'>{port}</span>"
+                        return f"<span style='color:blue;'>{port}</span>"
 
-                summary += f"<br> Protocol: <span style='color:{color}; font-weight:bold;'>{protocol}</span>"
-                summary += f"<br> Source Port: {format_port(packet.sport)}"
-                summary += f"<br> Destination Port: {format_port(packet.dport)}<br>"
+                    summary += f"<br> Protocol: <span style='color:{color}; font-weight:bold;'>{protocol}</span>"
+                    summary += f"<br> Source Port: {format_port(packet.sport)}"
+                    summary += f"<br> Destination Port: {format_port(packet.dport)}<br>"
 
-            self.terminal_output.append(summary)
+                # Instead of appending immediately -> add to queue
+                self.packet_queue.append(summary)
+
+            except Exception as e:
+                self.packet_queue.append(f"<br><span style='color:red;'>[ERROR] {str(e)}</span>")
 
     #change value of "Ethernet" in the sniff command to "Wi-Fi" and if ncap is installed on host computer it will run off of Wi-Fi - this needs to be addressed in terminal
         def sniff_thread():
@@ -416,6 +446,15 @@ class IDS_GUI(QMainWindow):
 
         thread = threading.Thread(target=sniff_thread, daemon=True)
         thread.start()
+
+    def flush_packets(self):
+        max_packets_per_refresh = 10  # tweak this if you want faster or slower updates
+        count = 0
+
+        while self.packet_queue and count < max_packets_per_refresh:
+            summary = self.packet_queue.popleft()
+            self.terminal_output.append(summary)
+            count += 1
 
 
     #------------ END of Packet Scanner Function ------------------------
