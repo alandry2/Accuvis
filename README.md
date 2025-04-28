@@ -36,6 +36,9 @@ pip install pcapy    - Packet Scanner
 pip install requests - Port Scanner(National Vulnerability Database)
 pip install pyfiglet - Ascii Art
 
+Additional prerequisite downloads:
+https://nmap.org/npcap/ - Used for Packet Scanner ; Accuvis uses its drivers
+
 Native Python Libraries Used:
 socket  - Port Scanner
 hashlib - File Integrity Monitor

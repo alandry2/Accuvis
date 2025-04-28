@@ -668,6 +668,15 @@ class IDS_GUI(QMainWindow):
     # ----------- END OF port scanner functions -----------------
     
 
+# ----------- PyInstaller Functions -----------------
+if getattr(sys, 'frozen', False):
+    # If the app is running as a bundled executable
+    currentDirectory = Path(sys._MEIPASS)
+else:
+    # If running as a normal Python script
+    currentDirectory = Path(__file__).parent
+
+
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
