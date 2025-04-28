@@ -4,6 +4,8 @@
 from scapy.all import sniff
 import threading
 from pathlib import Path
+from collections import deque
+from queue import Queue
 
 #-------------------- Port Scanner ----------------------
 #ThreadPoolExecutor does asynchronous execution with threads.
@@ -28,7 +30,7 @@ import json
 
 #-------------------- GUI ----------------------
 import sys
-from pyfiglet import Figlet
+import pyfiglet
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
@@ -37,9 +39,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
-from collections import deque
-from queue import Queue
-
 
 
 
@@ -63,7 +62,7 @@ class IDS_GUI(QMainWindow):
         self.message_timer.start(100)
 
         #Ascii Art : Accuvis
-        figlet = Figlet(font='standard')
+        figlet = pyfiglet.Figlet(font='standard')
         logo ="-_ Accuvis _-"
         rendered_text = figlet.renderText(logo)
 

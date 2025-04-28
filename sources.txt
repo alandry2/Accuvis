@@ -16,3 +16,13 @@ https://www.secdev.org/projects/scapy/doc/scapy_cheat_sheet.pdf
 RFC 791 (IP) and RFC 793 (TCP) Docs
 RFC 791 - Internet Protocol (IP)
 RFC 793 - Transmission Control Protocol (TCP)
+
+figlet - ASCII Art
+https://github.com/pwaller/pyfiglet 
+
+color for teminal
+https://www.w3schools.com/html/html_colors.asp
+
+National Vulnerability Database(NVD) - CVEs
+https://nvd.nist.gov/developers/vulnerabilities
+
