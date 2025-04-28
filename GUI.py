@@ -62,7 +62,7 @@ class IDS_GUI(QMainWindow):
         self.message_timer.start(100)
 
         #Ascii Art : Accuvis
-        figlet = pyfiglet.Figlet(font='standard')
+        figlet = pyfiglet.Figlet()
         logo ="-_ Accuvis _-"
         rendered_text = figlet.renderText(logo)
 
