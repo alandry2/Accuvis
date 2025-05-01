@@ -448,7 +448,7 @@ class IDS_GUI(QMainWindow):
         thread.start()
 
     def flush_packets(self):
-        max_packets_per_refresh = 10  # tweak this if you want faster or slower updates
+        max_packets_per_refresh = 10  # we can tweak this if we want faster or slower updates
         count = 0
 
         while self.packet_queue and count < max_packets_per_refresh:
