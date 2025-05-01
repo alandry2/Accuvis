@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_data_files
 
-datas = []
+datas = [('bird_logo.png', '.'), ('IDS_icon.png', '.')]
 datas += collect_data_files('pyfiglet')
 
 
