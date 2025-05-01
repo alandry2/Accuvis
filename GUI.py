@@ -4,6 +4,8 @@
 from scapy.all import sniff
 import threading
 from pathlib import Path
+from collections import deque
+from queue import Queue
 
 #-------------------- Port Scanner ----------------------
 #ThreadPoolExecutor does asynchronous execution with threads.
@@ -28,7 +30,7 @@ import json
 
 #-------------------- GUI ----------------------
 import sys
-from pyfiglet import Figlet
+import pyfiglet
 from tkinter import Tk, filedialog
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
@@ -37,9 +39,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QPixmap, QTextCursor, QIcon
-from collections import deque
-from queue import Queue
-
 
 
 
@@ -63,7 +62,7 @@ class IDS_GUI(QMainWindow):
         self.message_timer.start(100)
 
         #Ascii Art : Accuvis
-        figlet = Figlet(font='standard')
+        figlet = pyfiglet.Figlet()
         logo ="-_ Accuvis _-"
         rendered_text = figlet.renderText(logo)
 
@@ -110,7 +109,7 @@ class IDS_GUI(QMainWindow):
         self.sniff_button.clicked.connect(lambda: self.run_sniffer("Ethernet"))
 
         self.sniff_button2 = QPushButton("Start Packet Sniff: Wi-Fi")
-        self.sniff_button2.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
+        self.sniff_button2.setStyleSheet("background-color: #559f19; color: white; padding: 10px;")
         self.sniff_button2.clicked.connect(lambda: self.run_sniffer("Wi-Fi"))
 
         button_layout1.addWidget(self.sniff_button)
@@ -207,7 +206,7 @@ class IDS_GUI(QMainWindow):
         button_layout4 = QVBoxLayout() #QHBoxLayout displays them horizontally and QVBoxLayout displays them Vertically
         
         self.start_button4 = QPushButton("Start ACCUVIS LIVE")
-        self.start_button4.setStyleSheet("background-color: #4CAF40; color: white; padding: 10px;")
+        self.start_button4.setStyleSheet("background-color: #559f19; color: white; padding: 10px;")
         self.start_button4.clicked.connect(self.start_accuvis_live)
 
         self.stop_button4 = QPushButton("Stop ACCUVIS LIVE")
@@ -252,7 +251,7 @@ class IDS_GUI(QMainWindow):
         self.function_PortScanner.clicked.connect(lambda: self.stackLayout.setCurrentIndex(1))
         self.function_PortScanner.setStyleSheet("""
                 QPushButton {
-                    background-color: #4aee56; 
+                    background-color: #559f19; 
                     color: white; 
                     border-radius: 8px; 
                     padding: 10px; 
@@ -267,7 +266,7 @@ class IDS_GUI(QMainWindow):
         self.function_FileIntegritMon.clicked.connect(lambda: self.stackLayout.setCurrentIndex(2))
         self.function_FileIntegritMon.setStyleSheet("""
                 QPushButton {
-                    background-color: #fc694f; 
+                    background-color: #e25050; 
                     color: white;
                     border-radius: 8px; 
                     padding: 10px;
@@ -668,6 +667,15 @@ class IDS_GUI(QMainWindow):
             invalidPortsDialog.exec()
     # ----------- END OF port scanner functions -----------------
     
+
+# ----------- PyInstaller Functions -----------------
+if getattr(sys, 'frozen', False):
+    # If the app is running as a bundled executable
+    currentDirectory = Path(sys._MEIPASS)
+else:
+    # If running as a normal Python script
+    currentDirectory = Path(__file__).parent
+
 
 if __name__ == "__main__":
 

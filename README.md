@@ -1,4 +1,28 @@
 # Accuvis
+
+
+[NOTES FOR DOWNLOADERS START]
+================================================================================================
+Before Running Program, Please Install External Libraries :
+1.pip install PyQt6    - GUI
+2.pip install pcapy    - Packet Scanner
+3.pip install requests - Port Scanner(National Vulnerability Database)
+4.pip install pyfiglet - Ascii Art
+
+Additional prerequisite downloads that do not use pip install:
+5.https://nmap.org/npcap/ - Used for Packet Scanner ; Accuvis uses its drivers
+
+Native Python Libraries Used:
+socket  - Port Scanner
+hashlib - File Integrity Monitor
+
+Notes on Port Scanner :
+We are using an API key to generate faster and more requests from the National Vulnerability Database (NVD)
+================================================================================================
+
+
+
+[NOTES FOR DEVELOPERS START]
 IDS (Intrusion Detection System) built in Python
 
 
@@ -24,21 +48,10 @@ Instead of implementing a login screen, we utilized our time to add-on 'Accuvis 
 
 ================================================================================================
 Implementation of National Vulnerability Database (NVD) to output CVES related to open port
-ELEOPER IS SHARING HIS NVD API KEY INSIDE CODE 
+***ELEOPER IS SHARING HIS NVD API KEY INSIDE CODE ***
 
 ASCII ART 
 pip install pyfiglet
 
 ================================================================================================
-Before Running Program, Please Install External Libraries :
-pip install PyQt6    - GUI
-pip install pcapy    - Packet Scanner
-pip install requests - Port Scanner(National Vulnerability Database)
-pip install pyfiglet - Ascii Art
-
-Native Python Libraries Used:
-socket  - Port Scanner
-hashlib - File Integrity Monitor
-
-Notes on Port Scanner :
-We are using an API key to generate faster and more requests from the National Vulnerability Database (NVD)
+[NOTES FOR DEVELOPERS END]
